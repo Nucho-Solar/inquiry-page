@@ -8,11 +8,11 @@ export default function Index() {
       <header className="bg-secondary text-secondary-foreground py-6 shadow-lg">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center gap-3">
-            <Sun className="w-10 h-10 text-primary" />
-            <div>
+            <Sun className="w-12 h-12 text-primary" />
+            <div className="text-center">
               <h1 className="text-3xl md:text-4xl font-bold">Nucho Solar</h1>
               <p className="text-sm md:text-base text-secondary-foreground/80">
-                Powering Kenya with Smart Energy Solutions
+                Green Energy - Smart Solutions
               </p>
             </div>
           </div>
