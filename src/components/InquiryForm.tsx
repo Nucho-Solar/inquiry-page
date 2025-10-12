@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -86,6 +87,7 @@ export default function InquiryForm() {
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
   const [budget, setBudget] = useState("");
+  const [explanation, setExplanation] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const toggleDevice = (deviceId: string) => {
@@ -193,6 +195,9 @@ export default function InquiryForm() {
 🛠️ *Services Requested:*
 ${allServices.map((service, index) => `${index + 1}. ${service}`).join("\n")}
 
+📝 *About:*
+${explanation || "No additional details provided"}
+
 📱 _Please contact customer as soon as possible_`;
 
     const phoneNumber = "254758330507";
@@ -214,9 +219,9 @@ ${allServices.map((service, index) => `${index + 1}. ${service}`).join("\n")}
             <SelectValue placeholder="Select use case" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="home">🏠 Home</SelectItem>
-            <SelectItem value="office">🏢 Office</SelectItem>
-            <SelectItem value="farm">🌾 Farm</SelectItem>
+            <SelectItem value="home">Home - Kenya</SelectItem>
+            <SelectItem value="office">Office - Kenya</SelectItem>
+            <SelectItem value="farm">Farm - Kenya</SelectItem>
           </SelectContent>
         </Select>
         {errors.useCase && <p className="text-sm text-destructive">{errors.useCase}</p>}
@@ -355,6 +360,19 @@ ${allServices.map((service, index) => `${index + 1}. ${service}`).join("\n")}
             </SelectContent>
           </Select>
           {errors.budget && <p className="text-sm text-destructive">{errors.budget}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="explanation">Briefly Explain the service you Want.</Label>
+          <Textarea
+            id="explanation"
+            placeholder="Tell us more about what you need..."
+            value={explanation}
+            onChange={(e) => setExplanation(e.target.value)}
+            className="min-h-[100px] resize-none"
+            maxLength={500}
+          />
+          <p className="text-xs text-muted-foreground">Optional - Max 500 characters</p>
         </div>
       </div>
 
