@@ -12,7 +12,7 @@
     "preview": "vite preview",
     "deploy:prod": "npm run build:prod && npm run upload:prod",
     "deploy:dev": "npm run build:dev && npm run upload:dev",
-    "start": "node server.js"
+    "start": "node server.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
