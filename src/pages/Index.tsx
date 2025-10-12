@@ -37,16 +37,16 @@ export default function Index() {
             {/* Main Heading with Gradient Text */}
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight">
               <span className="bg-gradient-to-r from-primary via-yellow-300 to-primary bg-clip-text text-transparent">
-                Power Your Future
+                Free Quotation for
               </span>
               <br />
-              <span className="text-white">with Clean Energy</span>
+              <span className="text-white">Solar Installation Today</span>
             </h1>
             
             {/* Subheading */}
             <p className="text-lg md:text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed px-4">
-              Get a free consultation for solar installation, CCTV security, electric fencing, 
-              and smart energy solutions for your home, office, or farm.
+              Power your home, office, or farm with reliable solar energy.
+              Save on electricity bills and enjoy uninterrupted power — from Kenya Trusted Solar Experts.
             </p>
 
             {/* CTA Button */}
@@ -62,7 +62,7 @@ export default function Index() {
             {/* Trust Indicators */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mt-12 md:mt-16 max-w-4xl mx-auto px-4">
               <div className="text-center backdrop-blur-sm bg-white/10 p-4 rounded-xl border border-white/20">
-                <div className="text-3xl md:text-4xl font-bold text-primary">500+</div>
+                <div className="text-3xl md:text-4xl font-bold text-primary">1500+</div>
                 <div className="text-xs md:text-sm text-white/90 mt-1">Installations</div>
               </div>
               <div className="text-center backdrop-blur-sm bg-white/10 p-4 rounded-xl border border-white/20">
@@ -81,7 +81,10 @@ export default function Index() {
           </div>
         </section>
       </div>
-
+      <br>
+      <div className="mb-8 text-center">
+       <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-secondary mb-3">Why Kenyans Trust Nucho Solar</h3>
+       </div>
       {/* Features Section */}
       <section className="py-12 md:py-20 bg-muted/30">
         <div className="container mx-auto px-4">
@@ -141,5 +144,4 @@ export default function Index() {
         </div>
       </footer>
     </div>
-  );
-}
+)}
