@@ -179,7 +179,7 @@ export default function InquiryForm() {
 
     const allServices = [...selectedDeviceNames, ...otherDevices];
 
-    const message = `🔆 *Nucha Solar - New Inquiry*
+    const message = `🔆 *Nucho Solar - New Inquiry*
 
 👤 *Customer Details:*
 • Name: ${name}
@@ -195,7 +195,7 @@ ${allServices.map((service, index) => `${index + 1}. ${service}`).join("\n")}
 
 📱 _Please contact customer as soon as possible_`;
 
-    const phoneNumber = "254700000000"; // Replace with actual engineer's WhatsApp number
+    const phoneNumber = "254758330507";
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
 
@@ -314,7 +314,7 @@ ${allServices.map((service, index) => `${index + 1}. ${service}`).join("\n")}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number *</Label>
+            <Label htmlFor="phone">WhatsApp Phone Number *</Label>
             <Input
               id="phone"
               type="tel"

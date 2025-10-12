@@ -1,6 +1,7 @@
 import { Sun, Zap, Shield } from "lucide-react";
 import InquiryForm from "@/components/InquiryForm";
 import heroImage from "@/assets/hero-solar.jpg";
+import logo from "@/assets/nucho-logo.png";
 
 export default function Index() {
   return (
@@ -25,8 +26,7 @@ export default function Index() {
         <header className="relative z-10 backdrop-blur-md bg-white/10 border-b border-white/20 py-4">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-center gap-3">
-              <Sun className="h-10 md:h-12 w-10 md:w-12 text-primary" />
-              <span className="text-2xl md:text-3xl font-bold text-white">Nucho Solar</span>
+              <img src={logo} alt="Nucho Solar Logo" className="h-16 md:h-20 w-auto" />
             </div>
           </div>
         </header>
