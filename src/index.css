@@ -17,36 +17,39 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 12%;
 
-    --primary: 45 100% 55%;
+    --primary: 48 100% 60%;
     --primary-foreground: 0 0% 12%;
 
-    --secondary: 205 85% 28%;
+    --secondary: 210 50% 30%;
     --secondary-foreground: 0 0% 98%;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 0 0% 45%;
 
-    --accent: 200 80% 55%;
+    --accent: 165 70% 45%;
     --accent-foreground: 0 0% 12%;
 
-    --success: 120 60% 35%;
+    --success: 145 65% 40%;
     --success-foreground: 0 0% 100%;
 
-    --blue-primary: 205 100% 38%;
+    --blue-primary: 210 60% 35%;
     --blue-primary-foreground: 0 0% 100%;
+
+    --secondary-light: 210 45% 50%;
+    --secondary-dark: 210 70% 25%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 45 100% 55%;
+    --ring: 48 100% 60%;
 
     --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 45 100% 55%;
+    --sidebar-primary: 48 100% 60%;
     --sidebar-primary-foreground: 0 0% 12%;
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
@@ -55,39 +58,42 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 205 100% 12%;
+    --background: 210 70% 8%;
     --foreground: 0 0% 98%;
 
-    --card: 205 100% 15%;
+    --card: 210 60% 12%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 205 100% 15%;
+    --popover: 210 60% 12%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 45 100% 55%;
+    --primary: 48 100% 60%;
     --primary-foreground: 0 0% 12%;
 
-    --secondary: 205 85% 28%;
+    --secondary: 210 50% 30%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 205 100% 20%;
+    --muted: 210 50% 18%;
     --muted-foreground: 0 0% 70%;
 
-    --accent: 200 80% 55%;
+    --accent: 165 70% 45%;
     --accent-foreground: 0 0% 12%;
 
-    --success: 120 60% 35%;
+    --success: 145 65% 40%;
     --success-foreground: 0 0% 100%;
 
-    --blue-primary: 205 100% 38%;
+    --blue-primary: 210 60% 35%;
     --blue-primary-foreground: 0 0% 100%;
+
+    --secondary-light: 210 45% 50%;
+    --secondary-dark: 210 70% 25%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 205 100% 25%;
-    --input: 205 100% 25%;
-    --ring: 45 100% 55%;
+    --border: 210 50% 20%;
+    --input: 210 50% 20%;
+    --ring: 48 100% 60%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224 76.3% 48%;

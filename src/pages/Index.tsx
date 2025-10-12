@@ -1,85 +1,145 @@
 import { Sun, Zap, Shield } from "lucide-react";
 import InquiryForm from "@/components/InquiryForm";
+import heroImage from "@/assets/hero-solar.jpg";
+import logo from "@/assets/logo.png";
 
 export default function Index() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted to-accent/10">
-      {/* Header */}
-      <header className="bg-secondary text-secondary-foreground py-6 shadow-lg">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-center gap-3">
-            <Sun className="w-12 h-12 text-primary" />
-            <div className="text-center">
-              <h1 className="text-3xl md:text-4xl font-bold">Nucho Solar</h1>
-              <p className="text-sm md:text-base text-secondary-foreground/80">
-                Green Energy - Smart Solutions
-              </p>
+    <div className="min-h-screen bg-background">
+      {/* Hero Section with Background Image */}
+      <div className="relative min-h-[90vh] md:min-h-screen overflow-hidden">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src={heroImage} 
+            alt="Professional solar panel installation"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-secondary-dark/95 via-secondary/85 to-blue-primary/70" 
+               style={{
+                 background: 'linear-gradient(135deg, hsl(210 70% 25% / 0.95), hsl(210 60% 35% / 0.85), hsl(210 60% 35% / 0.7))'
+               }}
+          />
+        </div>
+        
+        {/* Transparent Header */}
+        <header className="relative z-10 backdrop-blur-md bg-white/10 border-b border-white/20 py-4">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-center gap-3">
+              <img src={logo} alt="Nucho Solar Logo" className="h-12 md:h-16 w-auto" />
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-12 md:py-16">
-        <div className="text-center mb-12 space-y-4">
-          <h2 className="text-4xl md:text-5xl font-bold text-secondary">
-            Go Green. Save Costs.
-          </h2>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Get a free consultation for solar installation, CCTV security, electric fencing, 
-            and smart energy solutions for your home, office, or farm.
-          </p>
+        {/* Hero Content */}
+        <section className="relative z-10 container mx-auto px-4 py-12 md:py-20 lg:py-24">
+          <div className="max-w-5xl mx-auto text-center text-white space-y-6 md:space-y-8 animate-fade-in">
+            {/* Main Heading with Gradient Text */}
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight">
+              <span className="bg-gradient-to-r from-primary via-yellow-300 to-primary bg-clip-text text-transparent">
+                Power Your Future
+              </span>
+              <br />
+              <span className="text-white">with Clean Energy</span>
+            </h1>
+            
+            {/* Subheading */}
+            <p className="text-lg md:text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed px-4">
+              Get a free consultation for solar installation, CCTV security, electric fencing, 
+              and smart energy solutions for your home, office, or farm.
+            </p>
 
-          {/* Features */}
-          <div className="grid md:grid-cols-3 gap-6 mt-12 max-w-4xl mx-auto">
-            <div className="bg-card p-6 rounded-xl shadow-md border border-border hover:shadow-lg transition-shadow">
-              <Sun className="w-12 h-12 text-primary mx-auto mb-3" />
-              <h3 className="font-semibold text-lg mb-2">Solar Power</h3>
-              <p className="text-sm text-muted-foreground">
+            {/* CTA Button */}
+            <div className="pt-4">
+              <a 
+                href="#get-quote" 
+                className="inline-block bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg px-8 py-4 rounded-lg shadow-2xl transition-all hover:scale-105 hover:shadow-primary/50"
+              >
+                Get Your Free Quote
+              </a>
+            </div>
+
+            {/* Trust Indicators */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mt-12 md:mt-16 max-w-4xl mx-auto px-4">
+              <div className="text-center backdrop-blur-sm bg-white/10 p-4 rounded-xl border border-white/20">
+                <div className="text-3xl md:text-4xl font-bold text-primary">500+</div>
+                <div className="text-xs md:text-sm text-white/90 mt-1">Installations</div>
+              </div>
+              <div className="text-center backdrop-blur-sm bg-white/10 p-4 rounded-xl border border-white/20">
+                <div className="text-3xl md:text-4xl font-bold text-primary">5★</div>
+                <div className="text-xs md:text-sm text-white/90 mt-1">Customer Rating</div>
+              </div>
+              <div className="text-center backdrop-blur-sm bg-white/10 p-4 rounded-xl border border-white/20">
+                <div className="text-3xl md:text-4xl font-bold text-primary">24/7</div>
+                <div className="text-xs md:text-sm text-white/90 mt-1">Support</div>
+              </div>
+              <div className="text-center backdrop-blur-sm bg-white/10 p-4 rounded-xl border border-white/20">
+                <div className="text-3xl md:text-4xl font-bold text-primary">🇰🇪</div>
+                <div className="text-xs md:text-sm text-white/90 mt-1">Kenya-wide</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* Features Section */}
+      <section className="py-12 md:py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
+            <div className="backdrop-blur-sm bg-card/95 p-6 md:p-8 rounded-2xl shadow-lg border border-border hover:shadow-2xl hover:scale-105 transition-all duration-300">
+              <Sun className="w-12 h-12 md:w-14 md:h-14 text-primary mx-auto mb-4" />
+              <h3 className="font-bold text-lg md:text-xl mb-3 text-center">Solar Power</h3>
+              <p className="text-sm md:text-base text-muted-foreground text-center leading-relaxed">
                 Clean, reliable energy that pays for itself
               </p>
             </div>
 
-            <div className="bg-card p-6 rounded-xl shadow-md border border-border hover:shadow-lg transition-shadow">
-              <Shield className="w-12 h-12 text-accent mx-auto mb-3" />
-              <h3 className="font-semibold text-lg mb-2">Security Systems</h3>
-              <p className="text-sm text-muted-foreground">
+            <div className="backdrop-blur-sm bg-card/95 p-6 md:p-8 rounded-2xl shadow-lg border border-border hover:shadow-2xl hover:scale-105 transition-all duration-300">
+              <Shield className="w-12 h-12 md:w-14 md:h-14 text-accent mx-auto mb-4" />
+              <h3 className="font-bold text-lg md:text-xl mb-3 text-center">Security Systems</h3>
+              <p className="text-sm md:text-base text-muted-foreground text-center leading-relaxed">
                 CCTV, alarms, and electric fencing
               </p>
             </div>
 
-            <div className="bg-card p-6 rounded-xl shadow-md border border-border hover:shadow-lg transition-shadow">
-              <Zap className="w-12 h-12 text-primary mx-auto mb-3" />
-              <h3 className="font-semibold text-lg mb-2">Smart Solutions</h3>
-              <p className="text-sm text-muted-foreground">
+            <div className="backdrop-blur-sm bg-card/95 p-6 md:p-8 rounded-2xl shadow-lg border border-border hover:shadow-2xl hover:scale-105 transition-all duration-300 sm:col-span-2 lg:col-span-1">
+              <Zap className="w-12 h-12 md:w-14 md:h-14 text-success mx-auto mb-4" />
+              <h3 className="font-bold text-lg md:text-xl mb-3 text-center">Smart Solutions</h3>
+              <p className="text-sm md:text-base text-muted-foreground text-center leading-relaxed">
                 Energy monitoring and automation
               </p>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Form Section */}
-        <div className="max-w-3xl mx-auto bg-card p-8 md:p-12 rounded-2xl shadow-2xl border border-border">
-          <div className="mb-8 text-center">
-            <h3 className="text-2xl md:text-3xl font-bold text-secondary mb-2">
-              Get Your Free Quote
-            </h3>
-            <p className="text-muted-foreground">
-              Tell us what you need, and we'll reach out on WhatsApp instantly.
-            </p>
+      {/* Form Section */}
+      <section id="get-quote" className="py-12 md:py-20 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto bg-card p-6 md:p-12 rounded-2xl shadow-2xl border border-border">
+            <div className="mb-8 text-center">
+              <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-secondary mb-3">
+                Get Your Free Quote
+              </h3>
+              <p className="text-muted-foreground text-sm md:text-base">
+                Tell us what you need, and we'll reach out on WhatsApp instantly.
+              </p>
+            </div>
+
+            <InquiryForm />
           </div>
-
-          <InquiryForm />
         </div>
+      </section>
 
-        {/* Footer Note */}
-        <div className="text-center mt-12 text-muted-foreground text-sm">
-          <p>Serving homes, offices, and farms across Kenya 🇰🇪</p>
-          <p className="mt-2">
+      {/* Footer */}
+      <footer className="bg-secondary text-secondary-foreground py-8 md:py-12">
+        <div className="container mx-auto px-4 text-center space-y-3">
+          <p className="text-sm md:text-base">Serving homes, offices, and farms across Kenya 🇰🇪</p>
+          <p className="text-xs md:text-sm opacity-80">
             © 2024 Nucho Solar. All rights reserved.
           </p>
         </div>
-      </section>
+      </footer>
     </div>
   );
 }
