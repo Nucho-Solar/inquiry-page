@@ -81,7 +81,7 @@ export default function Index() {
           </div>
         </section>
       </div>
-      <br>
+      <br />
       <div className="mb-8 text-center">
        <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-secondary mb-3">Why Kenyans Trust Nucho Solar</h3>
        </div>
