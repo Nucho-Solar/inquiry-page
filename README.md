@@ -1,8 +1,30 @@
-# Welcome to your Lovable project
+# Nucho Solar - Solar Solutions Inquiry Platform
+
+A modern web application for collecting solar solution inquiries and connecting customers with Nucho Solar services via WhatsApp.
 
 ## Project info
 
 **URL**: https://lovable.dev/projects/21260f8a-30ce-4504-ab99-50a78cf70361
+
+## Local Development Setup
+
+For detailed instructions on setting up the project locally, see **[LOCAL_SETUP.md](./LOCAL_SETUP.md)**.
+
+### Quick Start
+
+```bash
+# Clone the repository
+git clone <YOUR_GIT_URL>
+cd <PROJECT_NAME>
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+Visit **http://localhost:8080** to see the application.
 
 ## How can I edit this code?
 

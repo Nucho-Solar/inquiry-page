@@ -118,10 +118,6 @@ export default function InquiryForm() {
         return;
       }
 
-      if (otherDevices.length >= 5) {
-        setErrors({ ...errors, otherDevice: "Maximum 5 custom devices allowed" });
-        return;
-      }
 
       setOtherDevices([...otherDevices, trimmedInput]);
       setCurrentOtherInput("");
@@ -200,7 +196,7 @@ ${explanation || "No additional details provided"}
 
 📱 _Please contact customer as soon as possible_`;
 
-    const phoneNumber = "254758330507";
+    const phoneNumber = import.meta.env.VITE_WHATSAPP_PHONE || "254758330507";
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
 
@@ -276,7 +272,7 @@ ${explanation || "No additional details provided"}
             className={errors.otherDevice ? "border-destructive" : ""}
           />
           <p className="text-xs text-muted-foreground">
-            Press Enter after typing each device (3-50 characters, max 5 devices)
+            Press Enter after typing each device (3-50 characters)
           </p>
           {errors.otherDevice && <p className="text-sm text-destructive">{errors.otherDevice}</p>}
           
