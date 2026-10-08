@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { InquiryPayload } from "@/lib/inquirySchema";
 import { readAttribution } from "@/lib/attribution";
 import { submitInquiry } from "@/lib/submitInquiry";
@@ -57,6 +57,77 @@ describe("submitInquiry", () => {
     expect(await submitInquiry(payload, fetchImpl)).toEqual({
       ok: false,
       reason: "network",
+    });
+  });
+});
+
+describe("submitInquiry timeout", () => {
+  const originalTimeout = AbortSignal.timeout;
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    AbortSignal.timeout = originalTimeout;
+  });
+
+  it("passes an abort signal to fetch", async () => {
+    const fetchImpl = respond(200);
+    await submitInquiry(payload, fetchImpl);
+    expect(fetchImpl.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("uses AbortSignal.timeout(15000) when available", async () => {
+    const spy = vi.spyOn(AbortSignal, "timeout");
+    await submitInquiry(payload, respond(200));
+    expect(spy).toHaveBeenCalledWith(15000);
+  });
+
+  it.each(["TimeoutError", "AbortError"])("maps a %s rejection to network", async (name) => {
+    const fetchImpl = vi.fn().mockRejectedValue(new DOMException("aborted", name));
+    expect(await submitInquiry(payload, fetchImpl)).toEqual({
+      ok: false,
+      reason: "network",
+    });
+  });
+
+  describe("without AbortSignal.timeout", () => {
+    beforeEach(() => {
+      // Simulate an older browser without AbortSignal.timeout.
+      (AbortSignal as { timeout?: unknown }).timeout = undefined;
+      vi.useFakeTimers();
+    });
+
+    const hangingFetch = () =>
+      vi.fn(
+        (_url: string, init: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => {
+            init.signal?.addEventListener("abort", () =>
+              reject(new DOMException("aborted", "AbortError")),
+            );
+          }),
+      );
+
+    it("resolves to network after 15 seconds when fetch never answers", async () => {
+      const fetchImpl = hangingFetch();
+      let result: unknown;
+      const pending = submitInquiry(payload, fetchImpl as unknown as typeof fetch).then((r) => {
+        result = r;
+      });
+      await vi.advanceTimersByTimeAsync(14999);
+      expect(result).toBeUndefined();
+      await vi.advanceTimersByTimeAsync(1);
+      await pending;
+      expect(result).toEqual({ ok: false, reason: "network" });
+    });
+
+    it("clears its timer once the request completes", async () => {
+      await submitInquiry(payload, respond(200));
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it("clears its timer when fetch rejects", async () => {
+      await submitInquiry(payload, vi.fn().mockRejectedValue(new TypeError("offline")));
+      expect(vi.getTimerCount()).toBe(0);
     });
   });
 });
