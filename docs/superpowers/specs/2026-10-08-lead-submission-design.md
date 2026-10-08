@@ -28,6 +28,7 @@ Each was confirmed one at a time on 2026-10-08.
 - Submit disables the button, shows "Sending…", and POSTs JSON to `/api/inquiry`. No `window.open`, no `wa.me`.
 - Success replaces the form with "Thanks {name}, we'll contact you on {phone}."
 - Failure keeps the entered values and shows an inline message with a `tel:` link to `VITE_CONTACT_PHONE`.
+- The form measures fill time with `performance.now()` (monotonic, so a wrong device clock cannot affect it) from mount to submit and sends it as `fillMs`.
 - The page URL's `gclid` and `utm_*` values are captured and sent with the lead.
 - The `AW-16856571719` gtag snippet moves into `index.html`. On success only, the page fires a conversion event using `VITE_ADS_CONVERSION_LABEL`; if unset, no event fires.
 - `VITE_WHATSAPP_PHONE` is renamed `VITE_CONTACT_PHONE` and used only for the failure link.
@@ -38,7 +39,7 @@ In order:
 
 1. POST only (405 otherwise), JSON only, body at most 10 KB.
 2. Validate with the shared schema; 400 with field errors.
-3. Spam: hidden honeypot field (filled returns a fake 200 and sends nothing); minimum 3 seconds from page load to submit; per-IP rate limit enforced by a Vercel Firewall rule (operator step, proposed default 5 per 10 minutes).
+3. Spam: hidden honeypot field (filled returns a fake 200 and sends nothing); minimum fill time, where the browser sends `fillMs` and the function drops the lead when `fillMs < 3000`, so the server never reads a client wall clock; a dropped submission is logged with the lead id and the reason (`honeypot` or `too_fast`) only; per-IP rate limit enforced by a Vercel Firewall rule (operator step, proposed default 5 per 10 minutes).
 4. Build the lead: UUID, Nairobi timestamp, `gclid`, `utm_*`.
 5. In parallel, each with a 5 second timeout, via `fetch` (no SDKs):
    - Telegram `sendMessage`, HTML parse mode, all fields escaped, with inline buttons WhatsApp (`wa.me/<lead phone>`) and Maps.

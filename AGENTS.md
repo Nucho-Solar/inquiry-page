@@ -71,7 +71,7 @@ Both are legacy, pending cutover to Vercel. `server.js` and `server.cjs` are the
 The forward to NuchoSolar is best-effort. A failure or timeout there must not change the response to the visitor or delay the Telegram and email alerts.
 
 ### Honeypot and timing
-The hidden `website` field and the 3-second minimum fill time are what drop bots. A bot submission gets a fake 200 on purpose, so nothing tells the sender it was dropped. A browser that autofills `website` silently drops a real lead, so keep the field hidden from autofill (`autoComplete="off"`, `tabIndex={-1}`).
+The hidden `website` field and the 3-second minimum fill time are what drop bots. The form measures fill time with `performance.now()` and sends `fillMs`; the function drops the lead when `fillMs < 3000`. The server never compares a client timestamp with its own clock, because a visitor's wrong device clock would silently drop a real lead. A bot submission gets a fake 200 on purpose, so nothing tells the sender it was dropped; the drop is logged as `{leadId, status: "dropped", reason}` (`honeypot` or `too_fast`) so a surge of dropped real leads is visible. A browser that autofills `website` silently drops a real lead, so keep the field hidden from autofill (`autoComplete="off"`, `tabIndex={-1}`).
 
 ### Logs carry no personal data
 Function logs record the lead id and the channel only. Never log names, phone numbers, emails or message bodies.
