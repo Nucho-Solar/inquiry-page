@@ -40,10 +40,10 @@ The page is also served as a static copy at `nucho-solar/inquiry-page/` (sibling
 
 Server variables are set in Vercel project settings and are read only by `api/inquiry.ts`. Never prefix them with `VITE_`, which would compile them into the public bundle.
 
-- `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`: both required for Telegram. If either is missing, the Telegram alert is skipped and logged.
-- `RESEND_API_KEY`, `RESEND_FROM`, `LEAD_EMAIL_TO`: all required for email. If any is missing, the email alert is skipped and logged.
+- `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`: both required for Telegram. If either is missing, the Telegram alert is skipped and logged with the lead id and channel only.
+- `RESEND_API_KEY`, `RESEND_FROM`, `LEAD_EMAIL_TO`: all required for email. If any is missing, the email alert is skipped and logged with the lead id and channel only.
 - If both channels are unconfigured, the endpoint returns 500 and leads are rejected loudly instead of vanishing.
-- `LEADS_WEBHOOK_URL`, `LEADS_WEBHOOK_SECRET`: both required to forward leads to NuchoSolar. If either is missing, the forward is skipped.
+- `LEADS_WEBHOOK_URL`, `LEADS_WEBHOOK_SECRET`: both required to forward leads to NuchoSolar. If either is missing, the forward skips silently.
 
 Browser variables are compiled into the bundle, so neither is secret.
 

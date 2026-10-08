@@ -40,8 +40,14 @@ async function post(
   return { channel, status: "failed" };
 }
 
+// An unconfigured alert channel is logged (lead id and channel only: no variable names or values).
+function skipped(lead: Lead, channel: Channel): ChannelResult {
+  console.error(JSON.stringify({ leadId: lead.id, channel, status: "skipped" }));
+  return { channel, status: "skipped" };
+}
+
 export async function sendTelegram(lead: Lead, env: Env): Promise<ChannelResult> {
-  if (!hasTelegram(env)) return { channel: "telegram", status: "skipped" };
+  if (!hasTelegram(env)) return skipped(lead, "telegram");
   const { text, replyMarkup } = formatTelegram(lead);
   return post(
     lead,
@@ -59,7 +65,7 @@ export async function sendTelegram(lead: Lead, env: Env): Promise<ChannelResult>
 }
 
 export async function sendEmail(lead: Lead, env: Env): Promise<ChannelResult> {
-  if (!hasEmail(env)) return { channel: "email", status: "skipped" };
+  if (!hasEmail(env)) return skipped(lead, "email");
   const to = (env.LEAD_EMAIL_TO ?? "")
     .split(",")
     .map((address) => address.trim())

@@ -84,14 +84,14 @@ describe("signPayload", () => {
 
 describe("sendTelegram", () => {
   it("skips without calling fetch when the token or chat id is missing", async () => {
-    expect(await sendTelegram(lead, { TELEGRAM_CHAT_ID: "1" })).toEqual({
-      channel: "telegram",
-      status: "skipped",
-    });
-    expect(await sendTelegram(lead, { TELEGRAM_BOT_TOKEN: "t" })).toEqual({
-      channel: "telegram",
-      status: "skipped",
-    });
+    for (const env of [{ TELEGRAM_CHAT_ID: "1" }, { TELEGRAM_BOT_TOKEN: "t" }]) {
+      errorSpy.mockClear();
+      expect(await sendTelegram(lead, env)).toEqual({ channel: "telegram", status: "skipped" });
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      expect(errorSpy).toHaveBeenCalledWith(
+        JSON.stringify({ leadId: lead.id, channel: "telegram", status: "skipped" }),
+      );
+    }
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -149,6 +149,10 @@ describe("sendEmail", () => {
   it("skips without calling fetch when RESEND_API_KEY is missing", async () => {
     const { RESEND_API_KEY: _omit, ...env } = EMAIL_ENV;
     expect(await sendEmail(lead, env)).toEqual({ channel: "email", status: "skipped" });
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledWith(
+      JSON.stringify({ leadId: lead.id, channel: "email", status: "skipped" }),
+    );
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -197,6 +201,7 @@ describe("forwardLead", () => {
   it("skips without calling fetch when LEADS_WEBHOOK_URL is missing", async () => {
     const { LEADS_WEBHOOK_URL: _omit, ...env } = FWD_ENV;
     expect(await forwardLead(lead, env)).toEqual({ channel: "forward", status: "skipped" });
+    expect(errorSpy).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
