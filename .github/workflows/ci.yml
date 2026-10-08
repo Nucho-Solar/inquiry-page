@@ -5,6 +5,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 # No lint step yet: `npm run lint` has 3 pre-existing errors that are fixed in a separate PR.
 jobs:
   verify:
