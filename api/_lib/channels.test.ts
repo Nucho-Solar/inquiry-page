@@ -24,7 +24,7 @@ const lead = toLead(
     explanation: "Need backup",
     submissionId: "11111111-1111-4111-8111-111111111111",
     website: "",
-    formStartedAt: 1,
+    fillMs: 1,
     attribution: { gclid: "abc" },
   } satisfies InquiryPayload,
   NOW,

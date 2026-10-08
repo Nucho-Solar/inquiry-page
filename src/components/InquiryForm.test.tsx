@@ -132,13 +132,32 @@ describe("InquiryForm", () => {
     const second = submitMock.mock.calls[1][0];
     expect(first.website).toBe("");
     expect(first.submissionId).toMatch(UUID);
-    expect(typeof first.formStartedAt).toBe("number");
+    expect(Number.isInteger(first.fillMs)).toBe(true);
+    expect(first.fillMs).toBeGreaterThanOrEqual(0);
     expect(first.attribution).toEqual(readAttribution(window.location.search));
     expect(first.attribution).toEqual({ gclid: "abc", utm_campaign: "solar" });
     expect(first.phone).toBe("+254712345678");
     expect(first.services).toEqual(["Solar Lighting Kit"]);
     expect(second.submissionId).toBe(first.submissionId);
-    expect(second.formStartedAt).toBe(first.formStartedAt);
+    expect(second.fillMs).toBeGreaterThanOrEqual(first.fillMs);
+  });
+
+  it("sends fillMs as a performance.now() delta from mount, not a wall-clock time", async () => {
+    let clock = 5000;
+    const nowSpy = vi.spyOn(performance, "now").mockImplementation(() => clock);
+    // A wall clock that is wildly wrong must not affect the value.
+    const dateSpy = vi.spyOn(Date, "now").mockReturnValue(4102444800000);
+    submitMock.mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<InquiryForm />);
+    await fillValidForm(user);
+    clock = 5000 + 12345.4;
+    await user.click(submitButton());
+    await screen.findByText(/^Thanks Jane/);
+
+    expect(submitMock.mock.calls[0][0].fillMs).toBe(12345);
+    nowSpy.mockRestore();
+    dateSpy.mockRestore();
   });
 
   it("rejects an invalid phone without calling the API", async () => {

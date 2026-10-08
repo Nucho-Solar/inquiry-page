@@ -58,9 +58,13 @@ export async function handleInquiry(
   }
   const payload = parsed.data;
 
-  // Bots get the same success response as people, and nothing is sent. A future
-  // formStartedAt gives a negative elapsed time, so it is caught here too.
-  if (payload.website.trim() !== "" || now.getTime() - payload.formStartedAt < MIN_FILL_MS) {
+  // Bots get the same success response as people, and nothing is sent. The fill
+  // time is measured by the browser with a monotonic clock, so no client wall
+  // clock is ever compared with the server clock. Drops are logged by id only.
+  const dropReason =
+    payload.website.trim() !== "" ? "honeypot" : payload.fillMs < MIN_FILL_MS ? "too_fast" : null;
+  if (dropReason) {
+    console.error(JSON.stringify({ leadId: payload.submissionId, status: "dropped", reason: dropReason }));
     return json(200, { ok: true });
   }
 

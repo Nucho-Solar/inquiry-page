@@ -120,9 +120,10 @@ export default function InquiryForm() {
   const [confirmation, setConfirmation] = useState<{ name: string; phone: string } | null>(null);
   const submitLock = useRef(false);
   const submissionId = useRef<string | null>(null);
-  const formStartedAt = useRef<number | null>(null);
+  const mountedAt = useRef<number | null>(null);
   if (submissionId.current === null) submissionId.current = crypto.randomUUID();
-  if (formStartedAt.current === null) formStartedAt.current = Date.now();
+  // performance.now() is monotonic, so a wrong or changed device clock cannot skew fillMs.
+  if (mountedAt.current === null) mountedAt.current = performance.now();
 
   const toggleDevice = (deviceId: string) => {
     setSelectedDevices((prev) =>
@@ -207,7 +208,7 @@ export default function InquiryForm() {
         ...result.data,
         submissionId: submissionId.current as string,
         website,
-        formStartedAt: formStartedAt.current as number,
+        fillMs: Math.max(0, Math.round(performance.now() - (mountedAt.current as number))),
         attribution: readAttribution(window.location.search),
       });
 

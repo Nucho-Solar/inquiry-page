@@ -48,7 +48,7 @@ export const inquiryFormSchema = z.object({
 export const inquiryPayloadSchema = inquiryFormSchema.extend({
   submissionId: z.string().uuid(),
   website: z.string().max(200).default(""),
-  formStartedAt: z.number().int(),
+  fillMs: z.number().int().min(0),
   attribution: attributionSchema.default({}),
 });
 

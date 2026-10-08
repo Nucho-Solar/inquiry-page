@@ -15,7 +15,7 @@ const payload: InquiryPayload = {
   explanation: "",
   submissionId: "3b241101-e2bb-4255-8caf-4136c566a962",
   website: "",
-  formStartedAt: 1700000000000,
+  fillMs: 60000,
   attribution: {},
 };
 

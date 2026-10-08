@@ -16,7 +16,7 @@ function payload(over: Partial<InquiryPayload> = {}): InquiryPayload {
     explanation: "Need backup for the fridge",
     submissionId: "11111111-1111-4111-8111-111111111111",
     website: "",
-    formStartedAt: 1,
+    fillMs: 1,
     attribution: { gclid: "abc", utm_campaign: "nairobi-home" },
     ...over,
   };
@@ -32,7 +32,7 @@ describe("toLead", () => {
     expect(l.id).toBe("11111111-1111-4111-8111-111111111111");
     expect(l.receivedAt).toBe("2026-10-08T19:44:00.000Z");
     expect(l).not.toHaveProperty("website");
-    expect(l).not.toHaveProperty("formStartedAt");
+    expect(l).not.toHaveProperty("fillMs");
     expect(l).not.toHaveProperty("submissionId");
   });
 });

@@ -34,7 +34,7 @@ function payload(overrides: Record<string, unknown> = {}) {
     explanation: "",
     submissionId: ID,
     website: "",
-    formStartedAt: NOW.getTime() - 60000,
+    fillMs: 60000,
     attribution: {},
     ...overrides,
   };
@@ -132,7 +132,7 @@ describe("handleInquiry response rule", () => {
       expect(lead.receivedAt).toBe(NOW.toISOString());
       expect(lead.phone).toBe("+254712345678");
       expect(lead).not.toHaveProperty("website");
-      expect(lead).not.toHaveProperty("formStartedAt");
+      expect(lead).not.toHaveProperty("fillMs");
     }
   });
 });
@@ -235,47 +235,81 @@ describe("handleInquiry spam checks", () => {
     expect(sendTelegram).toHaveBeenCalledTimes(1);
   });
 
-  it("fakes success when submitted less than 3 seconds after load", async () => {
-    const res = await handleInquiry(
-      post(payload({ formStartedAt: NOW.getTime() - 1000 })),
-      FULL_ENV,
-      NOW,
-    );
+  it.each([0, 1000, 2999])("fakes success when fillMs is %i, without sending", async (fillMs) => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await handleInquiry(post(payload({ fillMs })), FULL_ENV, NOW);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
     expectNoSenderCalled();
   });
 
-  it("fakes success when formStartedAt is far in the future", async () => {
-    const res = await handleInquiry(
-      post(payload({ formStartedAt: NOW.getTime() + 120000 })),
-      FULL_ENV,
-      NOW,
-    );
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true });
-    expectNoSenderCalled();
-  });
-
-  it("sends when the form was started exactly 3 seconds ago", async () => {
-    const res = await handleInquiry(
-      post(payload({ formStartedAt: NOW.getTime() - 3000 })),
-      FULL_ENV,
-      NOW,
-    );
+  it("sends when fillMs is exactly 3000", async () => {
+    const res = await handleInquiry(post(payload({ fillMs: 3000 })), FULL_ENV, NOW);
     expect(res.status).toBe(200);
     expect(sendTelegram).toHaveBeenCalledTimes(1);
   });
 
-  it("accepts a formStartedAt three days old and sends", async () => {
+  it("sends when the tab was open for three days", async () => {
     const res = await handleInquiry(
-      post(payload({ formStartedAt: NOW.getTime() - 3 * 24 * 3600 * 1000 })),
+      post(payload({ fillMs: 3 * 24 * 3600 * 1000 })),
       FULL_ENV,
       NOW,
     );
     expect(res.status).toBe(200);
     expect(sendTelegram).toHaveBeenCalledTimes(1);
     expect(sendEmail).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([-10 * 60 * 1000, 10 * 60 * 1000])(
+    "does not depend on the server clock (now shifted by %i ms)",
+    async (shift) => {
+      const res = await handleInquiry(
+        post(payload({ fillMs: 60000 })),
+        FULL_ENV,
+        new Date(NOW.getTime() + shift),
+      );
+      expect(res.status).toBe(200);
+      expect(sendTelegram).toHaveBeenCalledTimes(1);
+      expect(sendEmail).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it("returns 400 when fillMs is missing", async () => {
+    const { fillMs: _fillMs, ...rest } = payload();
+    const res = await handleInquiry(post(rest), FULL_ENV, NOW);
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { errors: Record<string, string> };
+    expect(typeof body.errors.fillMs).toBe("string");
+    expectNoSenderCalled();
+  });
+});
+
+describe("handleInquiry dropped spam log", () => {
+  it.each([
+    ["honeypot", { website: "x" }],
+    ["too_fast", { fillMs: 1000 }],
+  ])("logs a %s drop with the lead id and reason only", async (reason, override) => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await handleInquiry(post(payload(override)), FULL_ENV, NOW);
+    expect(error).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(String(error.mock.calls[0][0]))).toEqual({
+      leadId: ID,
+      status: "dropped",
+      reason,
+    });
+    expectNoSenderCalled();
+
+    const ok = await handleInquiry(post(payload()), FULL_ENV, NOW);
+    expect(res.status).toBe(ok.status);
+    expect(await res.text()).toBe(await ok.clone().text());
+    expect(res.headers.get("Content-Type")).toBe(ok.headers.get("Content-Type"));
+    expect(res.headers.get("Cache-Control")).toBe(ok.headers.get("Cache-Control"));
+  });
+
+  it("logs the honeypot reason when both checks fail", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    await handleInquiry(post(payload({ website: "x", fillMs: 10 })), FULL_ENV, NOW);
+    expect(JSON.parse(String(error.mock.calls[0][0])).reason).toBe("honeypot");
   });
 });
 

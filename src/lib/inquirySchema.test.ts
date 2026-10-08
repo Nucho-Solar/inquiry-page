@@ -35,7 +35,7 @@ const validPayload = {
   explanation: "Need backup power",
   submissionId: "3f1c2b8e-5a4d-4c6e-9b7a-1d2e3f4a5b6c",
   website: "",
-  formStartedAt: 1760000000000,
+  fillMs: 60000,
   attribution: { gclid: "abc", utm_source: "google" },
 };
 
@@ -53,9 +53,24 @@ describe("inquiryPayloadSchema", () => {
     ["explanation of 501 chars", { explanation: "a".repeat(501) }],
     ["budget not in options", { budget: "Free" }],
     ["submissionId not a UUID", { submissionId: "not-a-uuid" }],
+    ["negative fillMs", { fillMs: -1 }],
+    ["non-integer fillMs", { fillMs: 1500.5 }],
+    ["string fillMs", { fillMs: "60000" }],
   ])("rejects %s", (_label, override) => {
     const result = inquiryPayloadSchema.safeParse({ ...validPayload, ...override });
     expect(result.success).toBe(false);
+  });
+
+  it("rejects a payload without fillMs", () => {
+    const { fillMs: _f, ...rest } = validPayload;
+    expect(inquiryPayloadSchema.safeParse(rest).success).toBe(false);
+  });
+
+  it("accepts fillMs of 0 and a very large value", () => {
+    expect(inquiryPayloadSchema.safeParse({ ...validPayload, fillMs: 0 }).success).toBe(true);
+    expect(
+      inquiryPayloadSchema.safeParse({ ...validPayload, fillMs: 3 * 24 * 3600 * 1000 }).success,
+    ).toBe(true);
   });
 
   it("defaults explanation and website to empty strings", () => {
