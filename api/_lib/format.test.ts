@@ -54,15 +54,12 @@ describe("formatTelegram", () => {
     const { text } = formatTelegram(lead());
     expect(text.split("\n")).toEqual([
       "🔆 New solar lead · Home",
-      "",
-      "Jane Wanjiru",
-      "+254712345678",
-      "Karen",
-      "KSh 100,000 - 250,000",
-      "Solar panels, Battery storage",
-      "",
-      "Need backup for the fridge",
-      "",
+      "👤 Jane Wanjiru",
+      "📞 +254712345678",
+      "📍 Karen",
+      "💰 KSh 100,000 - 250,000",
+      "🛠 Solar panels, Battery storage",
+      "📝 Need backup for the fridge",
       "Google Ads · nairobi-home · 22:44 EAT",
     ]);
   });
@@ -71,13 +68,11 @@ describe("formatTelegram", () => {
     const { text } = formatTelegram(lead({ explanation: "" }));
     expect(text.split("\n")).toEqual([
       "🔆 New solar lead · Home",
-      "",
-      "Jane Wanjiru",
-      "+254712345678",
-      "Karen",
-      "KSh 100,000 - 250,000",
-      "Solar panels, Battery storage",
-      "",
+      "👤 Jane Wanjiru",
+      "📞 +254712345678",
+      "📍 Karen",
+      "💰 KSh 100,000 - 250,000",
+      "🛠 Solar panels, Battery storage",
       "Google Ads · nairobi-home · 22:44 EAT",
     ]);
   });
@@ -97,6 +92,7 @@ describe("formatTelegram", () => {
     const buttons = replyMarkup.inline_keyboard.flat();
     const wa = buttons.find((b) => b.url.startsWith("https://wa.me/"));
     const maps = buttons.find((b) => b.url.startsWith("https://www.google.com/maps/"));
+    expect(buttons.map((b) => b.text)).toEqual(["WhatsApp", "Maps"]);
     expect(wa?.url).toBe("https://wa.me/254712345678");
     expect(maps?.url).toBe(
       "https://www.google.com/maps/search/?api=1&query=" +
@@ -124,10 +120,17 @@ describe("escaping", () => {
     expect(html).toContain("&lt;script&gt;");
   });
 
-  it("escapes the plain-text body too", () => {
+  it("keeps the plain-text body verbatim (text/plain is not parsed as HTML)", () => {
     const { text } = formatEmail(hostile);
-    expect(text).not.toMatch(/[<>]/);
-    expect(text).toContain("&lt;");
+    expect(text).toContain('<b>Jo</b> & "Co"');
+    expect(text).toContain("<script>alert(1)</script>");
+    expect(text).not.toContain("&lt;");
+    expect(text).not.toContain("&amp;");
+  });
+
+  it("escapes user input in the html part", () => {
+    const { html } = formatEmail(hostile);
+    expect(html).toContain("&lt;b&gt;Jo&lt;/b&gt; &amp; &quot;Co&quot;");
   });
 });
 
@@ -136,6 +139,28 @@ describe("unicode preservation", () => {
     const notes = "Hello ☀️🔋\nsecond line\nمرحبا بالعالم";
     expect(formatTelegram(lead({ explanation: notes })).text).toContain(notes);
     expect(formatEmail(lead({ explanation: notes })).text).toContain(notes);
+  });
+});
+
+describe("formatEmail attribution rows", () => {
+  it("includes the gclid and lead id in html and text", () => {
+    const l = lead({ attribution: { gclid: "GCL-123" } });
+    const { html, text } = formatEmail(l);
+    for (const body of [html, text]) {
+      expect(body).toContain("GCLID");
+      expect(body).toContain("GCL-123");
+      expect(body).toContain("Lead ID");
+      expect(body).toContain(l.id);
+    }
+  });
+
+  it("omits the GCLID row when there is no gclid but keeps the lead id", () => {
+    const l = lead({ attribution: {} });
+    const { html, text } = formatEmail(l);
+    for (const body of [html, text]) {
+      expect(body).not.toContain("GCLID");
+      expect(body).toContain(l.id);
+    }
   });
 });
 

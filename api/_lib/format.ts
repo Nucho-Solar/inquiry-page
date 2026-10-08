@@ -39,14 +39,12 @@ export function formatTelegram(lead: Lead): {
 } {
   const lines = [
     `🔆 New solar lead · ${escapeHtml(capitalize(lead.useCase))}`,
-    "",
-    escapeHtml(lead.name),
-    escapeHtml(lead.phone),
-    escapeHtml(lead.location),
-    escapeHtml(lead.budget),
-    lead.services.map(escapeHtml).join(", "),
-    "",
-    ...(lead.explanation ? [escapeHtml(lead.explanation), ""] : []),
+    `👤 ${escapeHtml(lead.name)}`,
+    `📞 ${escapeHtml(lead.phone)}`,
+    `📍 ${escapeHtml(lead.location)}`,
+    `💰 ${escapeHtml(lead.budget)}`,
+    `🛠 ${lead.services.map(escapeHtml).join(", ")}`,
+    ...(lead.explanation ? [`📝 ${escapeHtml(lead.explanation)}`] : []),
     escapeHtml(source(lead)),
   ];
 
@@ -57,7 +55,7 @@ export function formatTelegram(lead: Lead): {
         [
           { text: "WhatsApp", url: `https://wa.me/${lead.phone.replace(/^\+/, "")}` },
           {
-            text: "Map",
+            text: "Maps",
             url:
               "https://www.google.com/maps/search/?api=1&query=" +
               encodeURIComponent(`${lead.location}, Kenya`),
@@ -82,10 +80,12 @@ export function formatEmail(lead: Lead): { subject: string; html: string; text: 
     ["Services", lead.services.join(", ")],
     ["Notes", lead.explanation],
     ["Source", source(lead)],
+    ["GCLID", lead.attribution.gclid ?? ""],
+    ["Lead ID", lead.id],
   ];
   const present = rows.filter(([, value]) => value !== "");
 
-  const text = present.map(([label, value]) => `${label}: ${escapeHtml(value)}`).join("\n");
+  const text = present.map(([label, value]) => `${label}: ${value}`).join("\n");
   const html =
     `<table cellpadding="6" style="font-family:sans-serif;font-size:14px">` +
     present
