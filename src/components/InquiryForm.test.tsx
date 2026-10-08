@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import InquiryForm from "@/components/InquiryForm";
 import { submitInquiry } from "@/lib/submitInquiry";
@@ -51,6 +51,7 @@ describe("InquiryForm", () => {
   });
 
   it("shows the confirmation, tracks the conversion and removes the form on success", async () => {
+    vi.stubEnv("VITE_ADS_CONVERSION_LABEL", "lbl");
     submitMock.mockResolvedValue({ ok: true });
     const user = userEvent.setup();
     render(<InquiryForm />);
@@ -64,6 +65,7 @@ describe("InquiryForm", () => {
     expect(screen.queryByLabelText(/full name/i)).not.toBeInTheDocument();
     expect(openSpy).not.toHaveBeenCalled();
     expect(trackMock).toHaveBeenCalledTimes(1);
+    expect(trackMock).toHaveBeenCalledWith("lbl");
   });
 
   it("keeps the typed values and shows a tel link when the server fails", async () => {
@@ -96,17 +98,20 @@ describe("InquiryForm", () => {
     expect(await screen.findByRole("link")).toHaveAttribute("href", "tel:+254758330507");
   });
 
-  it("sends once on a double click and disables the button while pending", async () => {
+  it("sends once when submit fires twice before React re-renders, and disables the button while pending", async () => {
     let resolve!: (value: { ok: true }) => void;
     submitMock.mockImplementation(
       () => new Promise((r) => { resolve = r; }),
     );
     const user = userEvent.setup();
-    render(<InquiryForm />);
+    const { container } = render(<InquiryForm />);
     await fillValidForm(user);
 
-    const button = submitButton();
-    await user.dblClick(button);
+    const form = container.querySelector("form") as HTMLFormElement;
+    act(() => {
+      fireEvent.submit(form);
+      fireEvent.submit(form);
+    });
 
     expect(submitMock).toHaveBeenCalledTimes(1);
     await waitFor(() => expect(submitButton()).toBeDisabled());
