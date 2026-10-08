@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { budgetOptions } from "../src/lib/inquirySchema.js";
-import { forwardLead, sendEmail, sendTelegram, type ChannelResult } from "./_lib/channels.js";
-import type { Env } from "./_lib/config.js";
-import { handleInquiry } from "./inquiry.js";
+import { budgetOptions } from "../../src/lib/inquirySchema.js";
+import { forwardLead, sendEmail, sendTelegram, type ChannelResult } from "./channels.js";
+import type { Env } from "./config.js";
+import { handleInquiry } from "../inquiry.js";
 
-vi.mock("./_lib/channels.js", () => ({
+vi.mock("./channels.js", () => ({
   sendTelegram: vi.fn(),
   sendEmail: vi.fn(),
   forwardLead: vi.fn(),
