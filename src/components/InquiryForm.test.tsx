@@ -47,6 +47,7 @@ describe("InquiryForm", () => {
     cleanup();
     openSpy.mockRestore();
     vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
   });
 
   it("shows the confirmation, tracks the conversion and removes the form on success", async () => {
@@ -113,6 +114,19 @@ describe("InquiryForm", () => {
 
     resolve({ ok: true });
     expect(await screen.findByText(/^Thanks Jane/)).toBeInTheDocument();
+  });
+
+  it("still renders and submits when crypto.randomUUID is unavailable", async () => {
+    const realCrypto = globalThis.crypto;
+    vi.stubGlobal("crypto", { getRandomValues: realCrypto.getRandomValues.bind(realCrypto) });
+    submitMock.mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<InquiryForm />);
+    await fillValidForm(user);
+    await user.click(submitButton());
+    await screen.findByText(/^Thanks Jane/);
+
+    expect(submitMock.mock.calls[0][0].submissionId).toMatch(UUID);
   });
 
   it("sends the honeypot, a uuid, a timestamp and attribution, and reuses the submission id on retry", async () => {

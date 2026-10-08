@@ -26,6 +26,7 @@ import { budgetOptions, inquiryFormSchema } from "@/lib/inquirySchema";
 import { submitInquiry } from "@/lib/submitInquiry";
 import { readAttribution } from "@/lib/attribution";
 import { trackConversion } from "@/lib/trackConversion";
+import { newId } from "@/lib/uuid";
 
 type UseCase = "home" | "office" | "farm" | "";
 
@@ -121,7 +122,7 @@ export default function InquiryForm() {
   const submitLock = useRef(false);
   const submissionId = useRef<string | null>(null);
   const mountedAt = useRef<number | null>(null);
-  if (submissionId.current === null) submissionId.current = crypto.randomUUID();
+  if (submissionId.current === null) submissionId.current = newId();
   // performance.now() is monotonic, so a wrong or changed device clock cannot skew fillMs.
   if (mountedAt.current === null) mountedAt.current = performance.now();
 
