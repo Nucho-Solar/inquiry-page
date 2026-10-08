@@ -343,7 +343,7 @@ export default function InquiryForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">WhatsApp Phone Number *</Label>
+            <Label htmlFor="phone">Phone Number *</Label>
             <Input
               id="phone"
               type="tel"

@@ -1,6 +1,6 @@
 # Nucho Solar - Solar Solutions Inquiry Platform
 
-A modern web application for collecting solar solution inquiries and connecting customers with Nucho Solar services via WhatsApp.
+A modern web application for collecting solar solution inquiries and alerting the Nucho Solar team so they can contact customers.
 
 ## Project info
 

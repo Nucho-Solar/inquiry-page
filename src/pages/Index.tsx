@@ -125,7 +125,7 @@ export default function Index() {
                 Get Your Free Quote
               </h3>
               <p className="text-muted-foreground text-sm md:text-base">
-                Tell us what you need, and we'll reach out on WhatsApp instantly.
+                Tell us what you need, and we'll contact you to discuss your quote.
               </p>
             </div>
 

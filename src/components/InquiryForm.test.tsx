@@ -203,6 +203,12 @@ describe("InquiryForm", () => {
     expect(submitMock).not.toHaveBeenCalled();
   });
 
+  it("labels the phone field without naming a channel", () => {
+    const { container } = render(<InquiryForm />);
+    expect(screen.getByLabelText("Phone Number *")).toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/whatsapp/i);
+  });
+
   it("renders the honeypot hidden from assistive tech and the tab order", () => {
     const { container } = render(<InquiryForm />);
     const honeypot = container.querySelector('input[name="website"]');
