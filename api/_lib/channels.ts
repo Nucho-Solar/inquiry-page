@@ -26,6 +26,7 @@ async function post(
   try {
     const res = await fetch(url, {
       method: "POST",
+      redirect: "error",
       headers,
       body,
       signal: AbortSignal.timeout(CHANNEL_TIMEOUT_MS),

@@ -105,6 +105,7 @@ describe("sendTelegram", () => {
     expect(init.method).toBe("POST");
     expect(headers.get("content-type")).toBe("application/json");
     expect(init.signal).toBeInstanceOf(AbortSignal);
+    expect(init.redirect).toBe("error");
     const { text, replyMarkup } = formatTelegram(lead);
     expect(JSON.parse(body)).toEqual({
       chat_id: "-100555",
@@ -162,6 +163,7 @@ describe("sendEmail", () => {
     expect(headers.get("content-type")).toBe("application/json");
     expect(headers.get("idempotency-key")).toBe(lead.id);
     expect(init.signal).toBeInstanceOf(AbortSignal);
+    expect(init.redirect).toBe("error");
     expect(JSON.parse(body)).toEqual({
       from: "Leads <leads@example.com>",
       to: ["a@x.com", "b@x.com"],
@@ -207,6 +209,7 @@ describe("forwardLead", () => {
     expect(init.method).toBe("POST");
     expect(headers.get("content-type")).toBe("application/json");
     expect(init.signal).toBeInstanceOf(AbortSignal);
+    expect(init.redirect).toBe("error");
     expect(body).toBe(JSON.stringify(lead));
 
     const timestamp = headers.get("x-timestamp");
@@ -233,6 +236,23 @@ describe("forwardLead", () => {
       channel: "forward",
       status: "failed",
     });
+  });
+
+  it("returns failed when a redirect makes fetch throw, leaking nothing", async () => {
+    fetchMock.mockRejectedValue(
+      new TypeError("fetch failed: redirect mode is set to error: https://evil.example.net/x"),
+    );
+    expect(await forwardLead(lead, FWD_ENV, NOW)).toEqual({ channel: "forward", status: "failed" });
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(String(errorSpy.mock.calls[0][0]))).toEqual({
+      leadId: lead.id,
+      channel: "forward",
+      status: "failed",
+    });
+    const logged = loggedText();
+    for (const leaked of ["Jane", "254712345678", "whsec_test", "hooks.example.com", "evil.example.net"]) {
+      expect(logged).not.toContain(leaked);
+    }
   });
 
   it("returns failed when fetch throws", async () => {
