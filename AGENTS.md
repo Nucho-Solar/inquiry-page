@@ -31,7 +31,7 @@ The copy at `nucho-solar/inquiry-page/` (sibling repo) is the OLD WhatsApp-redir
 - `src/main.tsx` mounts `App.tsx`: React Query, tooltip and toast providers, `BrowserRouter` with `/` and a `*` catch-all. Add routes above the catch-all.
 - `src/pages/Index.tsx`: hero, trust sections, and the form anchor `#get-quote`.
 - `src/components/InquiryForm.tsx`: the form. Validates with `src/lib/inquirySchema.ts`, device lists per use case (`home`, `office`, `farm`), hidden `website` honeypot field, and submits through `src/lib/submitInquiry.ts`. On success it renders `InquirySuccess.tsx`; on failure it shows a tap-to-call link.
-- `src/lib/`: `inquirySchema.ts` (zod schema and phone normalisation, shared with the function), `submitInquiry.ts` (POST to `/api/inquiry`), `attribution.ts` (UTM and `gclid` capture), `trackConversion.ts` (Google Ads conversion event).
+- `src/lib/`: `inquirySchema.ts` (zod schema and phone normalisation, shared with the function), `submitInquiry.ts` (POST to `/api/inquiry`, 15 s timeout), `uuid.ts` (`newId`, a `crypto.randomUUID` fallback), `attribution.ts` (UTM and `gclid` capture), `trackConversion.ts` (Google Ads conversion event).
 - `api/inquiry.ts`: the Vercel function. Validates, drops bots, builds a lead, then sends Telegram and email alerts and the optional forward. Helpers in `api/_lib/`: `config.ts` (which channels are configured), `lead.ts`, `format.ts` (message text), `channels.ts` (Telegram, Resend, forward), `sign.ts` (forward signature). Types for `api/` come from `tsconfig.api.json`.
 - `src/components/ui/`: generated shadcn components. Re-add with the shadcn CLI rather than hand-editing.
 - Alias `@` maps to `src/`. Design tokens live in `src/index.css` and `tailwind.config.ts`.
