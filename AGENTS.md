@@ -24,7 +24,7 @@ Trunk: everything lands on `main` via PR. The Vercel project deploys from GitHub
 
 `Dockerfile` (node:18 build, nginx serve), `docker-compose.yml`, `nginx.conf` and `server.cjs` / `server.js` are legacy, pending cutover and removal. DNS for `inquiry.nuchosolar.co.ke` moves to Vercel at cutover; that is an operator step. Confirm with the operator before changing or deleting the legacy files.
 
-The page is also served as a static copy at `nucho-solar/inquiry-page/` (sibling repo). That copy is this app's `dist/` plus a hand-added `.htaccess` and a Google Ads tag, see below.
+The copy at `nucho-solar/inquiry-page/` (sibling repo) is the OLD WhatsApp-redirect build plus a hand-added `.htaccess` and a Google Ads tag. This build needs the `/api/inquiry` Vercel function, so never copy its `dist/` into `nucho-solar`: every submission would hit a missing endpoint and show the failure message.
 
 ## Architecture
 
