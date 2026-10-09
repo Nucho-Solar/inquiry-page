@@ -145,6 +145,16 @@ describe("sendTelegram", () => {
   });
 });
 
+describe("response bodies", () => {
+  it.each([200, 429])("cancels the unread body of a %i reply", async (status) => {
+    const res = new Response("upstream body", { status });
+    const cancel = vi.spyOn(res.body as ReadableStream, "cancel");
+    fetchMock.mockResolvedValue(res);
+    await sendTelegram(lead, TG_ENV);
+    expect(cancel).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("sendEmail", () => {
   it("skips without calling fetch when RESEND_API_KEY is missing", async () => {
     const { RESEND_API_KEY: _omit, ...env } = EMAIL_ENV;

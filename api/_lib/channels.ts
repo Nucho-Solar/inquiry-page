@@ -33,6 +33,8 @@ async function post(
       signal: AbortSignal.timeout(CHANNEL_TIMEOUT_MS),
     });
     ok = res.ok;
+    // The reply is never read, so release the connection instead of waiting for garbage collection.
+    void res.body?.cancel().catch(() => undefined);
   } catch {
     ok = false;
   }
