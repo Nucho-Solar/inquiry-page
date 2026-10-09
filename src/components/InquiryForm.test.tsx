@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import InquiryForm from "@/components/InquiryForm";
 import { submitInquiry } from "@/lib/submitInquiry";
@@ -117,6 +117,29 @@ describe("InquiryForm", () => {
     expect(screen.getByLabelText("Full name")).toBeInTheDocument();
     const payload = await contactAndSend(user);
     expect(payload.services).toEqual(["Solar gate motor"]);
+  });
+
+  it("keeps every contact field when a browser or password manager fills several at once", async () => {
+    const user = userEvent.setup();
+    render(<InquiryForm />);
+    await start(user, "Request a site assessment");
+    await user.click(screen.getByRole("button", { name: /A new installation/i }));
+    expect(() =>
+      act(() => {
+        for (const [label, value] of [
+          ["Full name", "Jane Wanjiru"],
+          ["Phone number", "0712 345 678"],
+          ["Town or area", "Karen"],
+        ]) {
+          const input = screen.getByLabelText(label) as HTMLInputElement;
+          input.value = value;
+          fireEvent.input(input);
+        }
+      }),
+    ).not.toThrow();
+    await user.click(screen.getByRole("button", { name: /send enquiry/i }));
+    await waitFor(() => expect(submitMock).toHaveBeenCalledTimes(1));
+    expect(submitMock.mock.calls[0][0]).toMatchObject({ name: "Jane Wanjiru", phone: "+254712345678", location: "Karen" });
   });
 
   it("keeps all contact fields together with browser autofill hints and validates phone", async () => {

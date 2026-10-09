@@ -464,7 +464,12 @@ export default function InquiryForm() {
                                     maxLength={field === "phone" ? 30 : 100}
                                     aria-invalid={Boolean(errors[field])}
                                     aria-describedby={errors[field] ? "enquiry-" + field + "-error" : undefined}
-                                    onInput={(event) => { setContact((previous) => ({ ...previous, [field]: event.currentTarget.value })); clearError(field); }}
+                                    onInput={(event) => {
+                                      // Read the value now: React clears currentTarget before a delayed update runs.
+                                      const value = event.currentTarget.value;
+                                      setContact((previous) => ({ ...previous, [field]: value }));
+                                      clearError(field);
+                                    }}
                                   />
                                   {errors[field] && <p id={"enquiry-" + field + "-error"} role="alert" className="enquiry-field-error">{errors[field]}</p>}
                                 </div>
