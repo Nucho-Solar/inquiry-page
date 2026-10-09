@@ -244,6 +244,30 @@ describe("InquiryForm", () => {
     expect(screen.queryByText(/saved details/i)).not.toBeInTheDocument();
   });
 
+  it("starts a fresh enquiry with a new id after a sent one is closed", async () => {
+    const user = userEvent.setup();
+    render(<InquiryForm />);
+    await start(user, "Get a site visit and quote");
+    await user.click(screen.getByRole("button", { name: /A new installation/i }));
+    const first = await contactAndSend(user);
+    expect(await screen.findByText(/^Thanks, Jane Wanjiru\./)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Close enquiry" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    await start(user, "Fix or upgrade my solar system");
+    expect(screen.queryByText(/^Thanks, /)).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "What do you need done?" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /Repair or troubleshoot/i }));
+    await user.type(screen.getByLabelText("Your description"), "Inverter stopped charging.");
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    expect(screen.getByLabelText("Full name")).toHaveValue("");
+    submitMock.mockClear();
+    const second = await contactAndSend(user);
+    expect(second.intent).toBe("service");
+    expect(second.submissionId).not.toBe(first.submissionId);
+  });
+
   it("keeps every contact field when a browser or password manager fills several at once", async () => {
     const user = userEvent.setup();
     render(<InquiryForm />);

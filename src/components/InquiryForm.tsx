@@ -130,6 +130,30 @@ export default function InquiryForm() {
     return next;
   });
 
+  // After a sent enquiry is closed, the next goal starts clean with its own id and its own timer.
+  const resetEnquiry = () => {
+    setConfirmation(null);
+    setIntent(null);
+    setStepIndex(0);
+    setUseCase(null);
+    setItems([]);
+    setQuery("");
+    setInstallationHelp(false);
+    setServiceType(null);
+    setSurveyFor(null);
+    setExplanation("");
+    setContact({ name: "", phone: "", location: "" });
+    setErrors({});
+    setSubmitFailed(false);
+    submissionId.current = newId();
+    mountedAt.current = performance.now();
+  };
+
+  const changeOpen = (next: boolean) => {
+    setOpen(next);
+    if (!next && confirmation) resetEnquiry();
+  };
+
   const chooseIntent = (value: Intent) => {
     if (intent !== value) {
       setUseCase(null);
@@ -339,7 +363,7 @@ export default function InquiryForm() {
           <p>Nucho Solar. Serving homes, offices and farms across Kenya.</p>
         </footer>
       </div>
-      <Dialog.Root open={open} onOpenChange={setOpen}>
+      <Dialog.Root open={open} onOpenChange={changeOpen}>
             <Dialog.Portal>
               <Dialog.Overlay className="enquiry-overlay" />
               <Dialog.Content className="enquiry-dialog">
