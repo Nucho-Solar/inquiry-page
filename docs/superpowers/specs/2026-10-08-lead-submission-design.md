@@ -43,7 +43,7 @@ In order:
 4. Build the lead: UUID, Nairobi timestamp, `gclid`, `utm_*`.
 5. In parallel, each with a 5 second timeout, via `fetch` (no SDKs):
    - Telegram `sendMessage`, HTML parse mode, all fields escaped, with inline buttons WhatsApp (`wa.me/<lead phone>`) and Maps.
-   - Resend `POST /emails`, HTML and text bodies, `Idempotency-Key` set to the lead UUID plus a hash of the email content (changed 2026-10-09: with the UUID alone, a corrected resubmission with the same id was refused with 409).
+   - Resend `POST /emails`, HTML and text bodies, `Idempotency-Key` set to the lead UUID plus a hash of the fields the visitor typed (changed 2026-10-09: with the UUID alone, a corrected resubmission with the same id was refused with 409; a 409 counts as delivered).
    - Forward to `LEADS_WEBHOOK_URL`: JSON body, headers carry a timestamp and an HMAC-SHA256 signature over timestamp and body with `LEADS_WEBHOOK_SECRET`. Skipped while the URL is unset.
 6. Response: 200 if Telegram or Resend succeeded; 502 if both failed. The forward never changes the response.
 7. Logs carry the lead ID and failing channel only. No names or phone numbers.
