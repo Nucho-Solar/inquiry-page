@@ -165,7 +165,7 @@ describe("sendEmail", () => {
     expect(init.method).toBe("POST");
     expect(headers.get("authorization")).toBe("Bearer re_secret_key");
     expect(headers.get("content-type")).toBe("application/json");
-    expect(headers.get("idempotency-key")).toBe(lead.id);
+    expect(headers.get("idempotency-key")).toMatch(new RegExp(`^${lead.id}-[0-9a-f]{16}$`));
     expect(init.signal).toBeInstanceOf(AbortSignal);
     expect(init.redirect).toBe("error");
     expect(JSON.parse(body)).toEqual({
@@ -173,6 +173,20 @@ describe("sendEmail", () => {
       to: ["a@x.com", "b@x.com"],
       ...formatEmail(lead),
     });
+  });
+
+  it("repeats the idempotency key for an identical retry and changes it when the lead is edited", async () => {
+    respond(200);
+    await sendEmail(lead, EMAIL_ENV);
+    respond(200);
+    await sendEmail(lead, EMAIL_ENV);
+    respond(200);
+    await sendEmail({ ...lead, phone: "+254700111222" }, EMAIL_ENV);
+
+    const keys = [0, 1, 2].map((i) => call(i).headers.get("idempotency-key"));
+    expect(keys[1]).toBe(keys[0]);
+    expect(keys[2]).not.toBe(keys[0]);
+    expect(keys[2]).toMatch(new RegExp(`^${lead.id}-`));
   });
 
   it("drops empty recipients", async () => {

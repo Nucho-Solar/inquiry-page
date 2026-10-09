@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { emailRecipients, hasEmail, hasForward, hasTelegram, type Env } from "./config.js";
 import { formatEmail, formatTelegram } from "./format.js";
 import type { Lead } from "./lead.js";
@@ -66,7 +67,15 @@ export async function sendTelegram(lead: Lead, env: Env): Promise<ChannelResult>
 
 export async function sendEmail(lead: Lead, env: Env): Promise<ChannelResult> {
   if (!hasEmail(env)) return skipped(lead, "email");
-  const to = emailRecipients(env);
+  const message = formatEmail(lead);
+  // The visitor can fix a typo and resubmit with the same lead id. A key from the id alone would
+  // make Resend answer 409 for the corrected email, so the key also covers the email content.
+  const contentHash = createHash("sha256")
+    .update(message.subject)
+    .update("\0")
+    .update(message.text)
+    .digest("hex")
+    .slice(0, 16);
   return post(
     lead,
     "email",
@@ -74,9 +83,9 @@ export async function sendEmail(lead: Lead, env: Env): Promise<ChannelResult> {
     {
       Authorization: `Bearer ${env.RESEND_API_KEY}`,
       "Content-Type": "application/json",
-      "Idempotency-Key": lead.id,
+      "Idempotency-Key": `${lead.id}-${contentHash}`,
     },
-    JSON.stringify({ from: env.RESEND_FROM, to, ...formatEmail(lead) }),
+    JSON.stringify({ from: env.RESEND_FROM, to: emailRecipients(env), ...message }),
   );
 }
 
