@@ -8,8 +8,16 @@ export function hasTelegram(env: Env): boolean {
   return allSet(env, ["TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"]);
 }
 
+export function emailRecipients(env: Env): string[] {
+  return (env.LEAD_EMAIL_TO ?? "")
+    .split(",")
+    .map((address) => address.trim())
+    .filter((address) => address !== "");
+}
+
+// A LEAD_EMAIL_TO of only commas counts as unset, so a bad value fails loudly instead of per lead.
 export function hasEmail(env: Env): boolean {
-  return allSet(env, ["RESEND_API_KEY", "RESEND_FROM", "LEAD_EMAIL_TO"]);
+  return allSet(env, ["RESEND_API_KEY", "RESEND_FROM"]) && emailRecipients(env).length > 0;
 }
 
 export function hasForward(env: Env): boolean {

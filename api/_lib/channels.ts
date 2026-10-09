@@ -1,4 +1,4 @@
-import { hasEmail, hasForward, hasTelegram, type Env } from "./config.js";
+import { emailRecipients, hasEmail, hasForward, hasTelegram, type Env } from "./config.js";
 import { formatEmail, formatTelegram } from "./format.js";
 import type { Lead } from "./lead.js";
 import { signPayload } from "./sign.js";
@@ -66,10 +66,7 @@ export async function sendTelegram(lead: Lead, env: Env): Promise<ChannelResult>
 
 export async function sendEmail(lead: Lead, env: Env): Promise<ChannelResult> {
   if (!hasEmail(env)) return skipped(lead, "email");
-  const to = (env.LEAD_EMAIL_TO ?? "")
-    .split(",")
-    .map((address) => address.trim())
-    .filter((address) => address !== "");
+  const to = emailRecipients(env);
   return post(
     lead,
     "email",
