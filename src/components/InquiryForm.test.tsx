@@ -117,6 +117,48 @@ describe("InquiryForm", () => {
     clock.restore();
   });
 
+  it("sends only the devices of the current use case after the use case changes", async () => {
+    submitMock.mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<InquiryForm />);
+    await fillValidForm(user);
+    await user.click(screen.getByRole("combobox", { name: /what do you need solar for/i }));
+    await user.click(await screen.findByRole("option", { name: "Farm - Kenya" }));
+    await user.click(await screen.findByRole("button", { name: "Solar Water Pump" }));
+    await user.click(submitButton());
+    await screen.findByText(/^Thanks Jane/);
+
+    expect(submitMock.mock.calls[0][0].services).toEqual(["Solar Water Pump"]);
+  });
+
+  it("drops the custom devices when Other is switched off", async () => {
+    submitMock.mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<InquiryForm />);
+    await fillValidForm(user);
+    await user.click(screen.getByRole("button", { name: "Other" }));
+    await user.type(screen.getByLabelText(/add custom devices/i), "Weather station{Enter}");
+    expect(screen.getByText("Weather station")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Other" }));
+    await user.click(submitButton());
+    await screen.findByText(/^Thanks Jane/);
+
+    expect(submitMock.mock.calls[0][0].services).toEqual(["Solar Lighting Kit"]);
+  });
+
+  it("keeps the custom devices while Other stays on", async () => {
+    submitMock.mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<InquiryForm />);
+    await fillValidForm(user);
+    await user.click(screen.getByRole("button", { name: "Other" }));
+    await user.type(screen.getByLabelText(/add custom devices/i), "Weather station{Enter}");
+    await user.click(submitButton());
+    await screen.findByText(/^Thanks Jane/);
+
+    expect(submitMock.mock.calls[0][0].services).toEqual(["Solar Lighting Kit", "Weather station"]);
+  });
+
   it("keeps the typed values and shows a tel link when the server fails", async () => {
     vi.stubEnv("VITE_CONTACT_PHONE", "254700111222");
     submitMock.mockResolvedValue({ ok: false, reason: "server" });

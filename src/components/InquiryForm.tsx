@@ -165,6 +165,12 @@ export default function InquiryForm() {
     setOtherDevices(otherDevices.filter((d) => d !== deviceToRemove));
   };
 
+  // Device ids belong to one use case, so a ticked device from another one would be sent as a raw id.
+  const changeUseCase = (value: UseCase) => {
+    setUseCase(value);
+    setSelectedDevices([]);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -179,9 +185,12 @@ export default function InquiryForm() {
           return device ? device.label : id;
         });
 
+      // The custom devices are only on screen while "Other" is ticked, so only then are they sent.
+      const customDevices = selectedDevices.includes("other") ? otherDevices : [];
+
       const result = inquiryFormSchema.safeParse({
         useCase,
-        services: [...selectedDeviceNames, ...otherDevices],
+        services: [...selectedDeviceNames, ...customDevices],
         name,
         phone,
         location,
@@ -242,7 +251,7 @@ export default function InquiryForm() {
         <Label htmlFor="use-case" className="text-lg font-semibold">
           What do you need solar for? *
         </Label>
-        <Select value={useCase} onValueChange={(value) => setUseCase(value as UseCase)}>
+        <Select value={useCase} onValueChange={(value) => changeUseCase(value as UseCase)}>
           <SelectTrigger id="use-case" className={errors.useCase ? "border-destructive" : ""}>
             <SelectValue placeholder="Select use case" />
           </SelectTrigger>
