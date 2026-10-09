@@ -2,26 +2,51 @@ import { describe, expect, it } from "vitest";
 import {
   budgetOptions,
   inquiryPayloadSchema,
-  normalizeKenyanPhone,
+  normalizePhone,
 } from "./inquirySchema";
 
-describe("normalizeKenyanPhone", () => {
+describe("normalizePhone", () => {
   it.each([
     "0712 345 678",
     "+254 712-345-678",
     "254712345678",
     "712345678",
     "+254712345678",
-  ])("normalizes %s", (input) => {
-    expect(normalizeKenyanPhone(input)).toBe("+254712345678");
+  ])("normalizes the Kenyan mobile %s", (input) => {
+    expect(normalizePhone(input)).toBe("+254712345678");
   });
 
   it("accepts numbers starting with 1", () => {
-    expect(normalizeKenyanPhone("0112345678")).toBe("+254112345678");
+    expect(normalizePhone("0112345678")).toBe("+254112345678");
   });
 
-  it.each(["07123", "+1 555 123 4567", ""])("rejects %j", (input) => {
-    expect(normalizeKenyanPhone(input)).toBeNull();
+  it.each([
+    ["020 234 5678", "+254202345678"],
+    ["+254 20 234 5678", "+254202345678"],
+    ["041 2345678", "+254412345678"],
+  ])("normalizes the Kenyan landline %s", (input, expected) => {
+    expect(normalizePhone(input)).toBe(expected);
+  });
+
+  it.each([
+    ["+1 415 555 0100", "+14155550100"],
+    ["+44 20 7946 0958", "+442079460958"],
+    ["+1 (415) 555-0100", "+14155550100"],
+  ])("keeps the international number %s", (input, expected) => {
+    expect(normalizePhone(input)).toBe(expected);
+  });
+
+  it.each([
+    "07123",
+    "",
+    "abc",
+    "+254 712 3456",
+    "+1 555",
+    "415 555 0100",
+    "+0 123 456 7890",
+    "+1234567890123456",
+  ])("rejects %j", (input) => {
+    expect(normalizePhone(input)).toBeNull();
   });
 });
 

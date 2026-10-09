@@ -186,9 +186,23 @@ describe("InquiryForm", () => {
     await user.click(submitButton());
 
     expect(
-      await screen.findByText("Enter a Kenyan mobile number, e.g. 0712 345 678"),
+      await screen.findByText("Enter a valid phone number, e.g. 0712 345 678"),
     ).toBeInTheDocument();
     expect(submitMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["a Kenyan landline", "020 234 5678", "+254202345678"],
+    ["an international number", "+1 415 555 0100", "+14155550100"],
+  ])("accepts %s and sends it normalised", async (_label, typed, sent) => {
+    submitMock.mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<InquiryForm />);
+    await fillValidForm(user, typed);
+    await user.click(submitButton());
+    await screen.findByText(/^Thanks Jane/);
+
+    expect(submitMock.mock.calls[0][0].phone).toBe(sent);
   });
 
   it("shows a message per field when the form is empty", async () => {

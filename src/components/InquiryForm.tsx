@@ -80,7 +80,7 @@ const fieldMessages = {
   useCase: "Please select a use case",
   services: "Please select at least one device or add a custom device",
   name: "Name is required (max 100 characters)",
-  phone: "Enter a Kenyan mobile number, e.g. 0712 345 678",
+  phone: "Enter a valid phone number, e.g. 0712 345 678",
   location: "Location is required (max 100 characters)",
   budget: "Please select your estimated budget",
   explanation: "Keep this under 500 characters",

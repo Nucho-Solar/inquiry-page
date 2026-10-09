@@ -217,7 +217,7 @@ describe("handleInquiry request validation", () => {
     const res = await handleInquiry(post(payload({ phone: "12345" })), FULL_ENV, NOW);
     expect(res.status).toBe(400);
     const body = (await res.json()) as { errors: Record<string, string> };
-    expect(body.errors.phone).toBe("Enter a valid Kenyan phone number");
+    expect(body.errors.phone).toBe("Enter a valid phone number");
   });
 });
 

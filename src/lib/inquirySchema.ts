@@ -10,12 +10,17 @@ export const budgetOptions = [
   "Above KSh 500,000",
 ] as const;
 
-const KENYAN_PHONE = /^(?:\+?254|0)?([71]\d{8})$/;
+const KENYAN_MOBILE = /^(?:\+?254|0)?([71]\d{8})$/;
+// Landlines need the 0 or +254 prefix: 020 is Nairobi, 041 is Mombasa.
+const KENYAN_LANDLINE = /^(?:\+?254|0)([2-6]\d{8})$/;
+// Any other country: a + sign, then 8 to 15 digits with no leading 0. +254 is never accepted here.
+const INTERNATIONAL = /^\+(?!254)[1-9]\d{7,14}$/;
 
-export function normalizeKenyanPhone(input: string): string | null {
+export function normalizePhone(input: string): string | null {
   const cleaned = input.replace(/[\s\-()]/g, "");
-  const match = KENYAN_PHONE.exec(cleaned);
-  return match ? `+254${match[1]}` : null;
+  const kenyan = KENYAN_MOBILE.exec(cleaned) ?? KENYAN_LANDLINE.exec(cleaned);
+  if (kenyan) return `+254${kenyan[1]}`;
+  return INTERNATIONAL.test(cleaned) ? cleaned : null;
 }
 
 export const attributionSchema = z.object({
@@ -30,11 +35,11 @@ export const inquiryFormSchema = z.object({
   services: z.array(z.string().trim().min(1).max(50)).min(1).max(20),
   name: z.string().trim().min(1).max(100),
   phone: z.string().transform((value, ctx) => {
-    const normalized = normalizeKenyanPhone(value);
+    const normalized = normalizePhone(value);
     if (!normalized) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Enter a valid Kenyan phone number",
+        message: "Enter a valid phone number",
       });
       return z.NEVER;
     }
