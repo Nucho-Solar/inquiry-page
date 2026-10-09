@@ -96,6 +96,14 @@ const errorKeyForField: Record<keyof typeof fieldMessages, string> = {
   explanation: "explanation",
 };
 
+// The same rules apply to a device added with Enter and to one still typed when the form is sent.
+function otherDeviceProblem(input: string, existing: string[]): string | null {
+  if (!input) return "Device name cannot be empty";
+  if (input.length < 3 || input.length > 50) return "Device name must be between 3-50 characters";
+  if (existing.includes(input)) return "Device already added";
+  return null;
+}
+
 const honeypotStyle: React.CSSProperties = {
   position: "absolute",
   left: "-10000px",
@@ -138,22 +146,12 @@ export default function InquiryForm() {
     if (e.key === "Enter") {
       e.preventDefault();
       const trimmedInput = currentOtherInput.trim();
-      
-      if (!trimmedInput) {
-        setErrors({ ...errors, otherDevice: "Device name cannot be empty" });
+
+      const problem = otherDeviceProblem(trimmedInput, otherDevices);
+      if (problem) {
+        setErrors({ ...errors, otherDevice: problem });
         return;
       }
-
-      if (trimmedInput.length < 3 || trimmedInput.length > 50) {
-        setErrors({ ...errors, otherDevice: "Device name must be between 3-50 characters" });
-        return;
-      }
-
-      if (otherDevices.includes(trimmedInput)) {
-        setErrors({ ...errors, otherDevice: "Device already added" });
-        return;
-      }
-
 
       setOtherDevices([...otherDevices, trimmedInput]);
       setCurrentOtherInput("");
@@ -186,7 +184,15 @@ export default function InquiryForm() {
         });
 
       // The custom devices are only on screen while "Other" is ticked, so only then are they sent.
-      const customDevices = selectedDevices.includes("other") ? otherDevices : [];
+      // On a phone people often type a device and tap send without pressing Enter, so a device
+      // still sitting in the box counts too.
+      const otherSelected = selectedDevices.includes("other");
+      const pending = otherSelected ? currentOtherInput.trim() : "";
+      const addPending = pending !== "" && !otherDevices.includes(pending);
+      const pendingProblem = addPending ? otherDeviceProblem(pending, otherDevices) : null;
+      const customDevices = otherSelected
+        ? [...otherDevices, ...(addPending && !pendingProblem ? [pending] : [])]
+        : [];
 
       const result = inquiryFormSchema.safeParse({
         useCase,
@@ -198,18 +204,25 @@ export default function InquiryForm() {
         explanation,
       });
 
-      if (!result.success) {
+      if (!result.success || pendingProblem) {
         const newErrors: Record<string, string> = {};
-        for (const issue of result.error.issues) {
-          const field = issue.path[0] as keyof typeof fieldMessages;
-          if (field in fieldMessages) {
-            newErrors[errorKeyForField[field]] = fieldMessages[field];
+        if (!result.success) {
+          for (const issue of result.error.issues) {
+            const field = issue.path[0] as keyof typeof fieldMessages;
+            if (field in fieldMessages) {
+              newErrors[errorKeyForField[field]] = fieldMessages[field];
+            }
           }
         }
+        if (pendingProblem) newErrors.otherDevice = pendingProblem;
         setErrors(newErrors);
         return;
       }
 
+      if (otherSelected) {
+        setOtherDevices(customDevices);
+        setCurrentOtherInput("");
+      }
       setErrors({});
       setSubmitFailed(false);
       setSubmitting(true);
