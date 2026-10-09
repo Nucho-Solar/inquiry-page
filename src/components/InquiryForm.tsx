@@ -22,7 +22,7 @@ import {
   X,
 } from "lucide-react";
 import InquirySuccess from "@/components/InquirySuccess";
-import { budgetOptions, inquiryFormSchema } from "@/lib/inquirySchema";
+import { budgetOptions, inquiryFormSchema, MIN_FILL_MS } from "@/lib/inquirySchema";
 import { submitInquiry } from "@/lib/submitInquiry";
 import { readAttribution } from "@/lib/attribution";
 import { trackConversion } from "@/lib/trackConversion";
@@ -205,16 +205,20 @@ export default function InquiryForm() {
       setSubmitFailed(false);
       setSubmitting(true);
 
+      const fillMs = Math.max(0, Math.round(performance.now() - (mountedAt.current as number)));
       const outcome = await submitInquiry({
         ...result.data,
         submissionId: submissionId.current as string,
         website,
-        fillMs: Math.max(0, Math.round(performance.now() - (mountedAt.current as number))),
+        fillMs,
         attribution: readAttribution(window.location.search),
       });
 
       if (outcome.ok) {
-        trackConversion(import.meta.env.VITE_ADS_CONVERSION_LABEL);
+        // The function fakes success for a filled honeypot or a fill under MIN_FILL_MS and sends
+        // nothing, so those submissions must not count as Google Ads conversions.
+        const looksReal = website.trim() === "" && fillMs >= MIN_FILL_MS;
+        if (looksReal) trackConversion(import.meta.env.VITE_ADS_CONVERSION_LABEL);
         setConfirmation({ name: result.data.name, phone: result.data.phone });
       } else {
         setSubmitFailed(true);

@@ -1,10 +1,9 @@
-import { inquiryPayloadSchema } from "../src/lib/inquirySchema.js";
+import { inquiryPayloadSchema, MIN_FILL_MS } from "../src/lib/inquirySchema.js";
 import { forwardLead, sendEmail, sendTelegram } from "./_lib/channels.js";
 import { hasEmail, hasTelegram, type Env } from "./_lib/config.js";
 import { toLead } from "./_lib/lead.js";
 
 const MAX_BODY_BYTES = 10240;
-const MIN_FILL_MS = 3000;
 
 function json(status: number, body: unknown, extraHeaders: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {

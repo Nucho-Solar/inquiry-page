@@ -33,6 +33,19 @@ async function fillValidForm(
 
 const submitButton = () => screen.getByRole("button", { name: /request my free quote|sending/i });
 
+// performance.now() drives fillMs. Tests fill the form in a second or two, so the
+// fill time is set explicitly: advance() moves the clock forward from the mount time.
+function controlClock() {
+  let clock = 5000;
+  const spy = vi.spyOn(performance, "now").mockImplementation(() => clock);
+  return {
+    advance: (ms: number) => {
+      clock += ms;
+    },
+    restore: () => spy.mockRestore(),
+  };
+}
+
 describe("InquiryForm", () => {
   let openSpy: ReturnType<typeof vi.spyOn>;
 
@@ -53,9 +66,11 @@ describe("InquiryForm", () => {
   it("shows the confirmation, tracks the conversion and removes the form on success", async () => {
     vi.stubEnv("VITE_ADS_CONVERSION_LABEL", "lbl");
     submitMock.mockResolvedValue({ ok: true });
+    const clock = controlClock();
     const user = userEvent.setup();
     render(<InquiryForm />);
     await fillValidForm(user);
+    clock.advance(10000);
     await user.click(submitButton());
 
     expect(
@@ -66,6 +81,40 @@ describe("InquiryForm", () => {
     expect(openSpy).not.toHaveBeenCalled();
     expect(trackMock).toHaveBeenCalledTimes(1);
     expect(trackMock).toHaveBeenCalledWith("lbl");
+    clock.restore();
+  });
+
+  it("shows the confirmation but sends no conversion when the form was filled in under 3 seconds", async () => {
+    vi.stubEnv("VITE_ADS_CONVERSION_LABEL", "lbl");
+    submitMock.mockResolvedValue({ ok: true });
+    const clock = controlClock();
+    const user = userEvent.setup();
+    render(<InquiryForm />);
+    await fillValidForm(user);
+    clock.advance(2999);
+    await user.click(submitButton());
+
+    expect(await screen.findByText(/^Thanks Jane/)).toBeInTheDocument();
+    expect(trackMock).not.toHaveBeenCalled();
+    clock.restore();
+  });
+
+  it("shows the confirmation but sends no conversion when the hidden field was filled", async () => {
+    vi.stubEnv("VITE_ADS_CONVERSION_LABEL", "lbl");
+    submitMock.mockResolvedValue({ ok: true });
+    const clock = controlClock();
+    const user = userEvent.setup();
+    const { container } = render(<InquiryForm />);
+    await fillValidForm(user);
+    const honeypot = container.querySelector('input[name="website"]') as HTMLInputElement;
+    fireEvent.change(honeypot, { target: { value: "http://spam.example" } });
+    clock.advance(10000);
+    await user.click(submitButton());
+
+    expect(await screen.findByText(/^Thanks Jane/)).toBeInTheDocument();
+    expect(submitMock.mock.calls[0][0].website).toBe("http://spam.example");
+    expect(trackMock).not.toHaveBeenCalled();
+    clock.restore();
   });
 
   it("keeps the typed values and shows a tel link when the server fails", async () => {

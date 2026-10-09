@@ -10,6 +10,9 @@ export const budgetOptions = [
   "Above KSh 500,000",
 ] as const;
 
+// The browser measures the fill time and the function drops anything faster.
+export const MIN_FILL_MS = 3000;
+
 const KENYAN_MOBILE = /^(?:\+?254|0)?([71]\d{8})$/;
 // Landlines need the 0 or +254 prefix: 020 is Nairobi, 041 is Mombasa.
 const KENYAN_LANDLINE = /^(?:\+?254|0)([2-6]\d{8})$/;
