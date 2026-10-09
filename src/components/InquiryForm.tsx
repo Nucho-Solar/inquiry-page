@@ -348,7 +348,7 @@ export default function InquiryForm() {
         <main className="enquiry-landing-content">
           <h1>Get a <span className="enquiry-accent">free solar quote</span> for your home, office or farm</h1>
           <p className="enquiry-landing-subtitle">
-            Answer 3 or 4 quick questions and we'll contact you with a quote. No technical knowledge needed.
+            Answer 2 or 3 quick questions and we'll contact you with a quote. No technical knowledge needed.
           </p>
           <p className="enquiry-landing-ask" id="enquiry-goals-label">What do you need?</p>
           <div className="enquiry-options enquiry-intent-list" role="group" aria-labelledby="enquiry-goals-label">

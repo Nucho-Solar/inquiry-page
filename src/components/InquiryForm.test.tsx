@@ -34,7 +34,7 @@ describe("InquiryForm landing page", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Get a free solar quote for your home, office or farm" }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/Answer 3 or 4 quick questions/)).toHaveTextContent("No technical knowledge needed.");
+    expect(screen.getByText(/Answer 2 or 3 quick questions/)).toHaveTextContent("No technical knowledge needed.");
     expect(screen.getByText("Free quote. We call or WhatsApp you within 24 hours.")).toBeInTheDocument();
     for (const goal of [
       "Power my home, office or farm",
@@ -111,6 +111,22 @@ describe("InquiryForm", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Where will the system be used?" })).toBeInTheDocument();
     expect(screen.getByText("2 of 4")).toBeInTheDocument();
+  });
+
+  it.each([
+    "Power my home, office or farm",
+    "Buy panels, batteries or an inverter",
+    "Fix or upgrade my solar system",
+    "Get a site visit and quote",
+    "not sure",
+  ])("asks the 2 or 3 questions the landing page promises after the goal %s", async (goal) => {
+    const user = userEvent.setup();
+    render(<InquiryForm />);
+    await start(user, goal);
+    // The counter includes the goal itself as step 1, so the questions are one fewer.
+    const total = Number((screen.getByText(/^2 of \d$/).textContent ?? "").split(" of ")[1]);
+    expect(total - 1).toBeGreaterThanOrEqual(2);
+    expect(total - 1).toBeLessThanOrEqual(3);
   });
 
   it("goes back to the goals from the first question", async () => {
