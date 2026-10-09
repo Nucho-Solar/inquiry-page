@@ -22,6 +22,7 @@ async function post(
   url: string,
   headers: Record<string, string>,
   body: string,
+  alsoOk: readonly number[] = [],
 ): Promise<ChannelResult> {
   let ok = false;
   try {
@@ -32,7 +33,7 @@ async function post(
       body,
       signal: AbortSignal.timeout(CHANNEL_TIMEOUT_MS),
     });
-    ok = res.ok;
+    ok = res.ok || alsoOk.includes(res.status);
     // The reply is never read, so release the connection instead of waiting for garbage collection.
     void res.body?.cancel().catch(() => undefined);
   } catch {
@@ -71,11 +72,20 @@ export async function sendEmail(lead: Lead, env: Env): Promise<ChannelResult> {
   if (!hasEmail(env)) return skipped(lead, "email");
   const message = formatEmail(lead);
   // The visitor can fix a typo and resubmit with the same lead id. A key from the id alone would
-  // make Resend answer 409 for the corrected email, so the key also covers the email content.
+  // make Resend answer 409 for the corrected email, so the key also covers what the visitor typed.
+  // The receive time is left out: an identical retry a minute later must still get the same key.
   const contentHash = createHash("sha256")
-    .update(message.subject)
-    .update("\0")
-    .update(message.text)
+    .update(
+      JSON.stringify([
+        lead.useCase,
+        lead.name,
+        lead.phone,
+        lead.location,
+        lead.budget,
+        lead.services,
+        lead.explanation,
+      ]),
+    )
     .digest("hex")
     .slice(0, 16);
   return post(
@@ -88,6 +98,8 @@ export async function sendEmail(lead: Lead, env: Env): Promise<ChannelResult> {
       "Idempotency-Key": `${lead.id}-${contentHash}`,
     },
     JSON.stringify({ from: env.RESEND_FROM, to: emailRecipients(env), ...message }),
+    // 409: Resend already holds this key, so the same email went out on an earlier attempt.
+    [409],
   );
 }
 

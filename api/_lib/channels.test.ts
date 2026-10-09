@@ -199,6 +199,26 @@ describe("sendEmail", () => {
     expect(keys[2]).toMatch(new RegExp(`^${lead.id}-`));
   });
 
+  it("repeats the idempotency key for the same lead retried a minute later", async () => {
+    respond(200);
+    await sendEmail(lead, EMAIL_ENV);
+    respond(200);
+    await sendEmail({ ...lead, receivedAt: "2026-10-08T19:46:00.000Z" }, EMAIL_ENV);
+
+    expect(call(1).headers.get("idempotency-key")).toBe(call(0).headers.get("idempotency-key"));
+  });
+
+  it("counts Resend's 409 for a repeated key as delivered", async () => {
+    respond(409);
+    expect(await sendEmail(lead, EMAIL_ENV)).toEqual({ channel: "email", status: "ok" });
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it("does not count a 409 from Telegram as delivered", async () => {
+    respond(409);
+    expect(await sendTelegram(lead, TG_ENV)).toEqual({ channel: "telegram", status: "failed" });
+  });
+
   it("drops empty recipients", async () => {
     respond(200);
     await sendEmail(lead, { ...EMAIL_ENV, LEAD_EMAIL_TO: " a@x.com ,, b@x.com , " });
