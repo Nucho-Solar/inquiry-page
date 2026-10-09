@@ -1,11 +1,10 @@
 import { waitUntil } from "@vercel/functions";
-import { inquiryPayloadSchema, MIN_FILL_MS } from "../src/lib/inquirySchema.js";
+import { inquiryPayloadSchema, isUuid, MIN_FILL_MS } from "../src/lib/inquirySchema.js";
 import { forwardLead, sendEmail, sendTelegram } from "./_lib/channels.js";
 import { hasEmail, hasTelegram, type Env } from "./_lib/config.js";
 import { toLead } from "./_lib/lead.js";
 
 const MAX_BODY_BYTES = 10240;
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function json(status: number, body: unknown, extraHeaders: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {
@@ -62,7 +61,7 @@ export async function handleInquiry(
         ? "too_fast"
         : null;
   if (dropReason) {
-    const leadId = typeof peek.submissionId === "string" && UUID.test(peek.submissionId) ? peek.submissionId : null;
+    const leadId = isUuid(peek.submissionId) ? peek.submissionId : null;
     console.error(JSON.stringify({ leadId, status: "dropped", reason: dropReason }));
     return json(200, { ok: true });
   }

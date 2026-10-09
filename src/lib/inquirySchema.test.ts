@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   budgetOptions,
   inquiryPayloadSchema,
+  isUuid,
   normalizePhone,
 } from "./inquirySchema";
 
@@ -64,6 +65,22 @@ describe("normalizePhone", () => {
   ])("rejects %j", (input) => {
     expect(normalizePhone(input)).toBeNull();
   });
+});
+
+describe("isUuid", () => {
+  it("accepts what the payload schema accepts as a submissionId", () => {
+    const id = "3f1c2b8e-5a4d-4c6e-9b7a-1d2e3f4a5b6c";
+    expect(isUuid(id)).toBe(true);
+    expect(inquiryPayloadSchema.shape.submissionId.safeParse(id).success).toBe(true);
+  });
+
+  it.each(["", "not-a-uuid", "3f1c2b8e5a4d4c6e9b7a1d2e3f4a5b6c", 42, null, undefined, ["x"]])(
+    "rejects %j like the schema does",
+    (value) => {
+      expect(isUuid(value)).toBe(false);
+      expect(inquiryPayloadSchema.shape.submissionId.safeParse(value).success).toBe(false);
+    },
+  );
 });
 
 const validPayload = {

@@ -27,6 +27,9 @@ export function normalizePhone(input: string): string | null {
   return INTERNATIONAL.test(cleaned) ? cleaned : null;
 }
 
+// The same test the payload schema applies to submissionId, for code that has not validated a body yet.
+export const isUuid = (value: unknown): value is string => z.string().uuid().safeParse(value).success;
+
 export const attributionSchema = z.object({
   gclid: z.string().max(200).optional(),
   utm_source: z.string().max(200).optional(),
