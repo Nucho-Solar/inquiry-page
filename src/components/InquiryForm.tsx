@@ -96,12 +96,14 @@ const errorKeyForField: Record<keyof typeof fieldMessages, string> = {
   explanation: "explanation",
 };
 
-// The same rules apply to a device added with Enter and to one still typed when the form is sent.
+// The same length rule applies to a device added with Enter and to one still typed when the form is sent.
+function deviceLengthProblem(input: string): string | null {
+  return input.length < 3 || input.length > 50 ? "Device name must be between 3-50 characters" : null;
+}
+
 function otherDeviceProblem(input: string, existing: string[]): string | null {
   if (!input) return "Device name cannot be empty";
-  if (input.length < 3 || input.length > 50) return "Device name must be between 3-50 characters";
-  if (existing.includes(input)) return "Device already added";
-  return null;
+  return deviceLengthProblem(input) ?? (existing.includes(input) ? "Device already added" : null);
 }
 
 const honeypotStyle: React.CSSProperties = {
@@ -189,7 +191,7 @@ export default function InquiryForm() {
       const otherSelected = selectedDevices.includes("other");
       const pending = otherSelected ? currentOtherInput.trim() : "";
       const addPending = pending !== "" && !otherDevices.includes(pending);
-      const pendingProblem = addPending ? otherDeviceProblem(pending, otherDevices) : null;
+      const pendingProblem = addPending ? deviceLengthProblem(pending) : null;
       const customDevices = otherSelected
         ? [...otherDevices, ...(addPending && !pendingProblem ? [pending] : [])]
         : [];
