@@ -1,9 +1,12 @@
-.enquiry-page {
+/* The enquiry window is drawn in a portal outside .enquiry-page, so it needs the colours too. */
+.enquiry-page, .enquiry-dialog {
   --enquiry-navy: hsl(207 77% 15%);
   --enquiry-ink: hsl(202 56% 18%);
   --enquiry-yellow: hsl(43 79% 59%);
   --enquiry-surface: hsl(75 22% 96%);
   --enquiry-muted: hsl(192 13% 45%);
+}
+.enquiry-page {
   min-height: 100dvh;
   color: var(--enquiry-ink);
   background: var(--enquiry-surface);
