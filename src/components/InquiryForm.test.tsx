@@ -57,7 +57,7 @@ describe("InquiryForm", () => {
     });
     expect(payload).not.toHaveProperty("budget");
     expect(payload.submissionId).toMatch(/^[0-9a-f-]{36}$/i);
-    expect(await screen.findByText(/^Thanks Jane Wanjiru/)).toBeInTheDocument();
+    expect(await screen.findByText(/^Thanks, Jane Wanjiru\./)).toBeInTheDocument();
   });
 
   it("routes equipment buyers to a product search and installation choice", async () => {

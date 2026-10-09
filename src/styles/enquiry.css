@@ -228,6 +228,24 @@
 .enquiry-back:hover { color: hsl(43 68% 39%); }
 .enquiry-next-hint { margin-left: auto; color: hsl(190 13% 49%); font-size: 12px; }
 .enquiry-stage [role="status"] { margin: auto; }
+.enquiry-success { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; max-width: 520px; }
+.enquiry-success-icon { width: 52px; height: 52px; margin-bottom: 6px; color: hsl(150 60% 31%); }
+.enquiry-success-title { margin: 0; font: 600 clamp(34px, 4vw, 48px)/1.1 "Outfit", Arial, sans-serif; letter-spacing: -.04em; }
+.enquiry-success-next { margin: 0; color: hsl(194 23% 37%); font-size: 17px; line-height: 1.55; }
+.enquiry-success-sooner { margin: 18px 0 0; color: hsl(190 13% 46%); font-size: 14px; font-weight: 700; }
+.enquiry-success-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.enquiry-success-actions a { gap: 10px; justify-content: center; text-decoration: none; }
+.enquiry-secondary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 55px;
+  padding: 0 23px;
+  border: 1.5px solid hsl(198 36% 35%);
+  border-radius: 9px;
+  color: hsl(198 36% 28%);
+  font-weight: 800;
+}
+.enquiry-secondary:hover { background: hsl(43 100% 97%); border-color: hsl(43 59% 56%); }
 @keyframes enquiry-enter { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
 @media (max-width: 1050px) {
   .enquiry-landing-aside { display: none; }
