@@ -1,3 +1,4 @@
+import { waitUntil } from "@vercel/functions";
 import { inquiryPayloadSchema, MIN_FILL_MS } from "../src/lib/inquirySchema.js";
 import { forwardLead, sendEmail, sendTelegram } from "./_lib/channels.js";
 import { hasEmail, hasTelegram, type Env } from "./_lib/config.js";
@@ -20,6 +21,7 @@ export async function handleInquiry(
   request: Request,
   env: Env,
   now: Date = new Date(),
+  defer: (work: Promise<unknown>) => void = waitUntil,
 ): Promise<Response> {
   if (request.method !== "POST") {
     return json(405, { ok: false, error: "method_not_allowed" }, { Allow: "POST" });
@@ -73,11 +75,10 @@ export async function handleInquiry(
   }
 
   const lead = toLead(payload, now);
-  const [telegram, email] = await Promise.all([
-    sendTelegram(lead, env),
-    sendEmail(lead, env),
-    forwardLead(lead, env, now),
-  ]);
+  // The forward to NuchoSolar is best effort: the visitor's response and the alerts never wait
+  // for it. defer() lets the runtime keep it running after the response is sent.
+  defer(forwardLead(lead, env, now).then(() => undefined, () => undefined));
+  const [telegram, email] = await Promise.all([sendTelegram(lead, env), sendEmail(lead, env)]);
 
   if (telegram.status === "ok" || email.status === "ok") return json(200, { ok: true });
   return json(502, { ok: false, error: "delivery_failed" });

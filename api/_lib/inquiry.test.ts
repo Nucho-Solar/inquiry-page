@@ -137,6 +137,46 @@ describe("handleInquiry response rule", () => {
   });
 });
 
+describe("handleInquiry forward", () => {
+  it("responds without waiting for a forward that never settles", async () => {
+    setResults("ok", "ok");
+    vi.mocked(forwardLead).mockReturnValue(new Promise(() => {}));
+    const defer = vi.fn();
+    const res = await handleInquiry(post(payload()), FULL_ENV, NOW, defer);
+    expect(res.status).toBe(200);
+    expect(defer).toHaveBeenCalledTimes(1);
+    expect(defer.mock.calls[0][0]).toBeInstanceOf(Promise);
+  }, 1000);
+
+  it("hands the forward to the runtime so it can finish after the response", async () => {
+    let settle!: (value: ChannelResult) => void;
+    vi.mocked(forwardLead).mockReturnValue(new Promise((resolve) => (settle = resolve)));
+    const deferred: Promise<unknown>[] = [];
+    const res = await handleInquiry(post(payload()), FULL_ENV, NOW, (p) => deferred.push(p));
+    expect(res.status).toBe(200);
+    expect(deferred).toHaveLength(1);
+    settle(result("forward", "ok"));
+    await expect(deferred[0]).resolves.toBeUndefined();
+  });
+
+  it("does not let a rejecting forward change the response or surface as an unhandled rejection", async () => {
+    vi.mocked(forwardLead).mockRejectedValue(new Error("boom"));
+    const deferred: Promise<unknown>[] = [];
+    const res = await handleInquiry(post(payload()), FULL_ENV, NOW, (p) => deferred.push(p));
+    expect(res.status).toBe(200);
+    await expect(deferred[0]).resolves.toBeUndefined();
+  });
+
+  it("starts the forward even when both alert channels fail", async () => {
+    setResults("failed", "failed");
+    const defer = vi.fn();
+    const res = await handleInquiry(post(payload()), FULL_ENV, NOW, defer);
+    expect(res.status).toBe(502);
+    expect(forwardLead).toHaveBeenCalledTimes(1);
+    expect(defer).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("handleInquiry request validation", () => {
   it("returns 405 with Allow header for GET", async () => {
     const res = await handleInquiry(
