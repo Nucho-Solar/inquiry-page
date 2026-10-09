@@ -13,7 +13,12 @@ describe("InquirySuccess", () => {
     render(<InquirySuccess name="Jane Wanjiru" phone="+254712345678" />);
     const status = screen.getByRole("status");
     expect(status).toHaveTextContent("Thanks, Jane Wanjiru.");
-    expect(status).toHaveTextContent("We'll call or WhatsApp you on +254712345678 within 24 hours.");
+    expect(status).toHaveTextContent("We'll call or WhatsApp you on 0712 345 678 within 24 hours.");
+  });
+
+  it("shows an international number with its plus sign", () => {
+    render(<InquirySuccess name="Jane" phone="+14155550100" />);
+    expect(screen.getByRole("status")).toHaveTextContent("We'll call or WhatsApp you on +14155550100 within 24 hours.");
   });
 
   it("lets the visitor reach Nucho Solar sooner by call or WhatsApp", () => {

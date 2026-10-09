@@ -12,7 +12,7 @@ export default function InquirySuccess({ name, phone }: InquirySuccessProps) {
     <div role="status" className="enquiry-success">
       <CheckCircle2 className="enquiry-success-icon" aria-hidden="true" />
       <p className="enquiry-success-title">{`Thanks, ${name}.`}</p>
-      <p className="enquiry-success-next">{`We'll call or WhatsApp you on ${phone} within 24 hours.`}</p>
+      <p className="enquiry-success-next">{`We'll call or WhatsApp you on ${formatPhone(phone.replace(/\D/g, ""))} within 24 hours.`}</p>
       <p className="enquiry-success-sooner">Need us sooner?</p>
       <div className="enquiry-success-actions">
         <a href={callHref(digits)} className="enquiry-primary">
