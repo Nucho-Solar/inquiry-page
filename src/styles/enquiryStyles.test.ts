@@ -15,3 +15,13 @@ describe("enquiry colours", () => {
     expect(selectors).toContain(".enquiry-dialog");
   });
 });
+
+// On a phone the number is dropped from the button to save room, but a screen reader must still say it.
+describe("header call button on small screens", () => {
+  it("hides the number by clipping it, never with display: none", () => {
+    const rule = css.split("}").find((block) => block.includes(".enquiry-header-number"));
+    expect(rule).toBeDefined();
+    expect(rule).not.toMatch(/display:\s*none/);
+    expect(rule).toMatch(/clip/);
+  });
+});

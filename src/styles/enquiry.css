@@ -235,7 +235,7 @@
   .enquiry-header { padding: 16px 22px; }
   .enquiry-header .enquiry-brand-logo-dark { height: 64px; }
   .enquiry-header-link { min-height: 42px; padding: 0 13px; font-size: 13px; }
-  .enquiry-header-number { display: none; }
+  .enquiry-header-number { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .enquiry-landing::before { background: linear-gradient(90deg, hsl(207 77% 15% / .95), hsl(207 77% 15% / .78)); }
   .enquiry-landing-content { padding: 20px 22px 28px; }
   .enquiry-landing h1 { max-width: 550px; margin-bottom: 14px; font-size: clamp(34px, 9.4vw, 46px); }
