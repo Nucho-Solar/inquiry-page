@@ -4,13 +4,13 @@
 
 Before you begin, ensure you have the following installed:
 
-- **Node.js** (v18 or higher) - [Install with nvm](https://github.com/nvm-sh/nvm)
+- **Node.js** (v22.22 or higher; the test suite needs it) - [Install with nvm](https://github.com/nvm-sh/nvm)
 - **npm** (comes with Node.js)
 - **Git**
 
 Check your versions:
 ```bash
-node --version  # Should be v18 or higher
+node --version  # Should be v22.22 or higher
 npm --version
 git --version
 ```
@@ -50,7 +50,8 @@ code .env.local
 ```
 
 **Available Environment Variables:**
-- `VITE_WHATSAPP_PHONE` - Your WhatsApp business number (default: 254758330507)
+- `VITE_CONTACT_PHONE` - Number for the tap-to-call link shown if sending fails (default: 254758330507)
+- `VITE_ADS_CONVERSION_LABEL` - Google Ads conversion label (unset means no conversion event)
 - `VITE_APP_NAME` - Application name (default: Nucho Solar)
 
 ### 4. Run Development Server
@@ -101,14 +102,15 @@ nucho-solar/
 └── package.json          # Dependencies and scripts
 ```
 
-## Testing the WhatsApp Integration Locally
+## Testing the Submit Flow Locally
 
-1. Fill out the inquiry form with test data
-2. Click "Send Inquiry via WhatsApp"
-3. WhatsApp Web will open with a pre-filled message
-4. To test with a different number, update `VITE_WHATSAPP_PHONE` in `.env.local`
+`npm run dev` serves the form but not `/api/inquiry`, so submitting from the dev server fails and the tap-to-call fallback appears. To exercise the function locally:
 
-**Note:** The WhatsApp integration will open `https://wa.me/` with your inquiry details. Make sure WhatsApp is installed on your device or use WhatsApp Web.
+1. Run `npx vercel dev`. This needs a Vercel login and a linked project, which is an operator step.
+2. Set the server variables (`TELEGRAM_*`, `RESEND_*`, `LEAD_EMAIL_TO`, optionally `LEADS_WEBHOOK_*`) for the local run. Never put real values in files that are committed.
+3. Fill in the form and wait at least 3 seconds before submitting; faster submissions are treated as bots.
+
+Run the automated tests with `npm test`. They need Node 22.22 or higher.
 
 ## Troubleshooting
 
@@ -141,11 +143,11 @@ npm install
 
 ```bash
 # Verify Node.js version
-node --version  # Must be v18 or higher
+node --version  # Must be v22.22 or higher
 
 # If using wrong version, switch with nvm
-nvm install 18
-nvm use 18
+nvm install 22
+nvm use 22
 
 # Clean build
 rm -rf dist
@@ -276,8 +278,11 @@ docker-compose up
 
 When deploying to production, set these environment variables in your hosting platform:
 
-- **`VITE_WHATSAPP_PHONE`** - Your production WhatsApp number
+- **`VITE_CONTACT_PHONE`** - Production number for the tap-to-call fallback
+- **`VITE_ADS_CONVERSION_LABEL`** - Google Ads conversion label
 - **`VITE_APP_NAME`** - Application name (optional)
+
+The Telegram, Resend and `LEADS_WEBHOOK_*` server variables are set in Vercel project settings and must never be prefixed with `VITE_`. See `.env.example` for the names.
 
 **Important:** Environment variables prefixed with `VITE_` are embedded in the build at compile time, not runtime.
 

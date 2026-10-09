@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,12 @@ import {
   AlertTriangle,
   X,
 } from "lucide-react";
+import InquirySuccess from "@/components/InquirySuccess";
+import { budgetOptions, inquiryFormSchema, MIN_FILL_MS } from "@/lib/inquirySchema";
+import { submitInquiry } from "@/lib/submitInquiry";
+import { readAttribution } from "@/lib/attribution";
+import { trackConversion } from "@/lib/trackConversion";
+import { newId } from "@/lib/uuid";
 
 type UseCase = "home" | "office" | "farm" | "";
 
@@ -70,13 +76,33 @@ const deviceOptions: Record<string, DeviceOption[]> = {
   ],
 };
 
-const budgetOptions = [
-  "Below KSh 50,000",
-  "KSh 50,000 - 100,000",
-  "KSh 100,000 - 250,000",
-  "KSh 250,000 - 500,000",
-  "Above KSh 500,000",
-];
+const fieldMessages = {
+  useCase: "Please select a use case",
+  services: "Please select at least one device or add a custom device",
+  name: "Name is required (max 100 characters)",
+  phone: "Enter a valid phone number, e.g. 0712 345 678",
+  location: "Location is required (max 100 characters)",
+  budget: "Please select your estimated budget",
+  explanation: "Keep this under 500 characters",
+} as const;
+
+const errorKeyForField: Record<keyof typeof fieldMessages, string> = {
+  useCase: "useCase",
+  services: "devices",
+  name: "name",
+  phone: "phone",
+  location: "location",
+  budget: "budget",
+  explanation: "explanation",
+};
+
+const honeypotStyle: React.CSSProperties = {
+  position: "absolute",
+  left: "-10000px",
+  width: "1px",
+  height: "1px",
+  overflow: "hidden",
+};
 
 export default function InquiryForm() {
   const [useCase, setUseCase] = useState<UseCase>("");
@@ -88,7 +114,17 @@ export default function InquiryForm() {
   const [location, setLocation] = useState("");
   const [budget, setBudget] = useState("");
   const [explanation, setExplanation] = useState("");
+  const [website, setWebsite] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitFailed, setSubmitFailed] = useState(false);
+  const [confirmation, setConfirmation] = useState<{ name: string; phone: string } | null>(null);
+  const submitLock = useRef(false);
+  const submissionId = useRef<string | null>(null);
+  const mountedAt = useRef<number | null>(null);
+  if (submissionId.current === null) submissionId.current = newId();
+  // performance.now() is monotonic, so a wrong or changed device clock cannot skew fillMs.
+  if (mountedAt.current === null) mountedAt.current = performance.now();
 
   const toggleDevice = (deviceId: string) => {
     setSelectedDevices((prev) =>
@@ -129,79 +165,84 @@ export default function InquiryForm() {
     setOtherDevices(otherDevices.filter((d) => d !== deviceToRemove));
   };
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!name.trim() || name.length > 100) {
-      newErrors.name = "Name is required (max 100 characters)";
-    }
-
-    const phoneRegex = /^[+]?[0-9]{10,15}$/;
-    if (!phone.trim() || !phoneRegex.test(phone.replace(/\s/g, ""))) {
-      newErrors.phone = "Valid phone number required (10-15 digits)";
-    }
-
-    if (!useCase) {
-      newErrors.useCase = "Please select a use case";
-    }
-
-    if (selectedDevices.length === 0 && otherDevices.length === 0) {
-      newErrors.devices = "Please select at least one device or add a custom device";
-    }
-
-    if (!location.trim() || location.length > 100) {
-      newErrors.location = "Location is required (max 100 characters)";
-    }
-
-    if (!budget) {
-      newErrors.budget = "Please select your estimated budget";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  // Device ids belong to one use case, so a ticked device from another one would be sent as a raw id.
+  const changeUseCase = (value: UseCase) => {
+    setUseCase(value);
+    setSelectedDevices([]);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
+    if (submitLock.current) return;
+    submitLock.current = true;
 
-    const selectedDeviceNames = selectedDevices
-      .filter((id) => id !== "other")
-      .map((id) => {
-        const device = deviceOptions[useCase as string]?.find((d) => d.id === id);
-        return device ? device.label : id;
+    try {
+      const selectedDeviceNames = selectedDevices
+        .filter((id) => id !== "other")
+        .map((id) => {
+          const device = deviceOptions[useCase as string]?.find((d) => d.id === id);
+          return device ? device.label : id;
+        });
+
+      // The custom devices are only on screen while "Other" is ticked, so only then are they sent.
+      const customDevices = selectedDevices.includes("other") ? otherDevices : [];
+
+      const result = inquiryFormSchema.safeParse({
+        useCase,
+        services: [...selectedDeviceNames, ...customDevices],
+        name,
+        phone,
+        location,
+        budget,
+        explanation,
       });
 
-    const allServices = [...selectedDeviceNames, ...otherDevices];
+      if (!result.success) {
+        const newErrors: Record<string, string> = {};
+        for (const issue of result.error.issues) {
+          const field = issue.path[0] as keyof typeof fieldMessages;
+          if (field in fieldMessages) {
+            newErrors[errorKeyForField[field]] = fieldMessages[field];
+          }
+        }
+        setErrors(newErrors);
+        return;
+      }
 
-    const message = `🔆 *Nucho Solar - New Inquiry*
+      setErrors({});
+      setSubmitFailed(false);
+      setSubmitting(true);
 
-👤 *Customer Details:*
-• Name: ${name}
-• Phone: ${phone}
-• Location: ${location}
+      const fillMs = Math.max(0, Math.round(performance.now() - (mountedAt.current as number)));
+      const outcome = await submitInquiry({
+        ...result.data,
+        submissionId: submissionId.current as string,
+        website,
+        fillMs,
+        attribution: readAttribution(window.location.search),
+      });
 
-🏠 *Use Case:* ${useCase.charAt(0).toUpperCase() + useCase.slice(1)}
-
-💰 *Budget:* ${budget}
-
-🛠️ *Services Requested:*
-${allServices.map((service, index) => `${index + 1}. ${service}`).join("\n")}
-
-📝 *About:*
-${explanation || "No additional details provided"}
-
-📱 _Please contact customer as soon as possible_`;
-
-    const phoneNumber = import.meta.env.VITE_WHATSAPP_PHONE || "254758330507";
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-
-    window.open(whatsappUrl, "_blank");
+      if (outcome.ok) {
+        // The function fakes success for a filled honeypot or a fill under MIN_FILL_MS and sends
+        // nothing, so those submissions must not count as Google Ads conversions.
+        const looksReal = website.trim() === "" && fillMs >= MIN_FILL_MS;
+        if (looksReal) trackConversion(import.meta.env.VITE_ADS_CONVERSION_LABEL);
+        setConfirmation({ name: result.data.name, phone: result.data.phone });
+      } else {
+        setSubmitFailed(true);
+      }
+    } finally {
+      submitLock.current = false;
+      setSubmitting(false);
+    }
   };
+
+  const contactPhone: string = import.meta.env.VITE_CONTACT_PHONE || "254758330507";
+
+  if (confirmation) {
+    return <InquirySuccess name={confirmation.name} phone={confirmation.phone} />;
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -210,7 +251,7 @@ ${explanation || "No additional details provided"}
         <Label htmlFor="use-case" className="text-lg font-semibold">
           What do you need solar for? *
         </Label>
-        <Select value={useCase} onValueChange={(value) => setUseCase(value as UseCase)}>
+        <Select value={useCase} onValueChange={(value) => changeUseCase(value as UseCase)}>
           <SelectTrigger id="use-case" className={errors.useCase ? "border-destructive" : ""}>
             <SelectValue placeholder="Select use case" />
           </SelectTrigger>
@@ -315,7 +356,7 @@ ${explanation || "No additional details provided"}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">WhatsApp Phone Number *</Label>
+            <Label htmlFor="phone">Phone Number *</Label>
             <Input
               id="phone"
               type="tel"
@@ -369,12 +410,39 @@ ${explanation || "No additional details provided"}
             maxLength={500}
           />
           <p className="text-xs text-muted-foreground">Optional - Max 500 characters</p>
+          {errors.explanation && <p className="text-sm text-destructive">{errors.explanation}</p>}
         </div>
       </div>
 
+      {/* Honeypot: off-screen, ignored by people, filled by bots */}
+      <div style={honeypotStyle}>
+        <input
+          type="text"
+          name="website"
+          autoComplete="off"
+          tabIndex={-1}
+          aria-hidden="true"
+          value={website}
+          onChange={(e) => setWebsite(e.target.value)}
+        />
+      </div>
+
+      {submitFailed && (
+        <p role="alert" className="text-sm text-destructive">
+          We couldn't send your request. Please try again or call us on{" "}
+          <a href={`tel:+${contactPhone.replace(/\D/g, "")}`} className="underline font-medium">
+            {contactPhone}
+          </a>
+        </p>
+      )}
+
       {/* Submit Button */}
-      <Button type="submit" className="w-full text-lg py-6 font-semibold hover:scale-105 transition-transform">
-        📱 Send Inquiry via WhatsApp
+      <Button
+        type="submit"
+        disabled={submitting}
+        className="w-full text-lg py-6 font-semibold hover:scale-105 transition-transform"
+      >
+        {submitting ? "Sending…" : "Request My Free Quote"}
       </Button>
     </form>
   );
