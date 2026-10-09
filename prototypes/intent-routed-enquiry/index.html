@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#092b46" />
+  <title>Nucho Solar — Find the right help</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="concept-ribbon">Interactive concept · Nothing is submitted</div>
+  <main id="landing" class="landing">
+    <header class="site-header"><span class="brand"><span class="brand-symbol" aria-hidden="true">✳</span>NUCHO <b>SOLAR</b></span><span class="header-caption">Solar, made for your needs</span></header>
+    <div class="landing-image" aria-hidden="true"></div>
+    <div class="landing-content">
+      <p class="eyebrow"><span></span>YOUR SOLAR NEXT STEP</p>
+      <h1>What do you need <em>solar help with?</em></h1>
+      <p class="landing-subtitle">A new system, equipment, a repair, or a site assessment? Choose what you need and we’ll ask only the relevant questions.</p>
+      <button id="start" class="primary-button" type="button">Find the right help <span aria-hidden="true">↗</span></button>
+      <p class="landing-note">Free enquiry <span aria-hidden="true">·</span> No technical knowledge needed</p>
+      <div class="landing-points"><span><i aria-hidden="true">✓</i> A short, guided enquiry</span><span><i aria-hidden="true">✓</i> A relevant follow-up</span></div>
+    </div>
+    <div class="landing-aside" aria-hidden="true"><span>START WITH YOUR GOAL</span><strong>Systems.<br>Equipment.<br>Service.</strong><span class="aside-line"></span><small>We’ll guide you from there.</small></div>
+  </main>
+
+  <section id="wizard" class="wizard" role="dialog" aria-modal="true" aria-labelledby="question-title" hidden>
+    <div class="wizard-sidebar" aria-hidden="true">
+      <span class="brand"><span class="brand-symbol">✳</span>NUCHO <b>SOLAR</b></span>
+      <div class="sidebar-message"><span class="mini-rule"></span><p>YOUR SOLAR ENQUIRY</p><h2>Tell us your goal. We’ll take it from there.</h2><span>Each request gets a short path. You can describe things in your own words.</span></div>
+      <div class="sidebar-bottom">A guided enquiry concept</div>
+    </div>
+    <div class="wizard-main">
+      <div class="wizard-topbar"><button id="close" class="close-button" type="button" aria-label="Close enquiry">×</button><span class="wizard-brand">NUCHO <b>SOLAR</b></span><span class="step-number" id="step-number">Choose request</span></div>
+      <div class="progress" role="progressbar" aria-label="Enquiry progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="progress-fill"></span></div>
+      <div class="wizard-stage" id="wizard-stage" aria-live="polite">
+        <div class="question-shell" id="question-shell">
+          <p class="step-kicker" id="step-kicker">FIRST, YOUR GOAL</p>
+          <h2 id="question-title"></h2>
+          <p id="question-hint" class="question-hint"></p>
+          <div id="question-content"></div>
+          <p id="question-error" class="error" role="alert" hidden></p>
+        </div>
+      </div>
+      <div class="wizard-footer"><button id="back" class="back-button" type="button">← Back</button><span id="next-hint" class="next-hint"></span><button id="next" class="primary-button" type="button">Continue <span aria-hidden="true">→</span></button></div>
+    </div>
+  </section>
+  <script src="script.js"></script>
+</body>
+</html>

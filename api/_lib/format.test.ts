@@ -7,8 +7,10 @@ const NOW = new Date("2026-10-08T19:44:00.000Z");
 
 function payload(over: Partial<InquiryPayload> = {}): InquiryPayload {
   return {
+    intent: "system",
     useCase: "home",
     services: ["Solar panels", "Battery storage"],
+    installationHelp: false,
     name: "Jane Wanjiru",
     phone: "+254712345678",
     location: "Karen",
@@ -54,13 +56,32 @@ describe("escapeHtml", () => {
 });
 
 describe("formatTelegram", () => {
+  it("shows equipment installation help without an unused budget or setting", () => {
+    const { text } = formatTelegram(lead({
+      intent: "equipment", useCase: undefined, services: ["Inverter"],
+      installationHelp: true, budget: undefined, explanation: "",
+    }));
+    expect(text).toContain("Solar equipment");
+    expect(text).toContain("🔩 Installation help requested");
+    expect(text).not.toContain("💰");
+    expect(text).not.toContain("🏠");
+  });
+
+  it("includes service details and assessment purpose", () => {
+    expect(formatTelegram(lead({ intent: "service", serviceType: "repair", services: [] })).text)
+      .toContain("🔧 Repair or troubleshoot");
+    expect(formatTelegram(lead({ intent: "survey", surveyFor: "project", services: [] })).text)
+      .toContain("📋 Business or farm project");
+  });
+
   it("matches the layout", () => {
     const { text } = formatTelegram(lead());
     expect(text.split("\n")).toEqual([
-      "🔆 New solar lead · Home",
+      "🔆 New solar lead · Solar system",
       "👤 Jane Wanjiru",
       "📞 +254712345678",
       "📍 Karen",
+      "🏠 Home",
       "💰 KSh 100,000 - 250,000",
       "🛠 Solar panels, Battery storage",
       "📝 Need backup for the fridge",
@@ -71,10 +92,11 @@ describe("formatTelegram", () => {
   it("omits the notes line when explanation is empty", () => {
     const { text } = formatTelegram(lead({ explanation: "" }));
     expect(text.split("\n")).toEqual([
-      "🔆 New solar lead · Home",
+      "🔆 New solar lead · Solar system",
       "👤 Jane Wanjiru",
       "📞 +254712345678",
       "📍 Karen",
+      "🏠 Home",
       "💰 KSh 100,000 - 250,000",
       "🛠 Solar panels, Battery storage",
       "Google Ads · nairobi-home · 8 Oct 22:44 EAT",
@@ -194,7 +216,7 @@ describe("formatEmail attribution rows", () => {
 describe("formatEmail subject", () => {
   it("matches the spec", () => {
     expect(formatEmail(lead()).subject).toBe(
-      "New lead: Jane Wanjiru, Karen (Home, KSh 100,000 - 250,000)",
+      "New lead: Jane Wanjiru, Karen (Solar system, KSh 100,000 - 250,000)",
     );
   });
 

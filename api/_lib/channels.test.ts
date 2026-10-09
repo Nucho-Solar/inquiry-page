@@ -15,8 +15,10 @@ const NOW = new Date("2026-10-08T19:44:00.000Z");
 
 const lead = toLead(
   {
+    intent: "system",
     useCase: "home",
     services: ["Solar panels"],
+    installationHelp: false,
     name: "Jane Wanjiru",
     phone: "+254712345678",
     location: "Karen",

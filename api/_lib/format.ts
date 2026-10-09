@@ -28,6 +28,26 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+const intentNames = {
+  system: "Solar system",
+  equipment: "Solar equipment",
+  service: "Existing-system service",
+  survey: "Site assessment",
+  unsure: "General enquiry",
+} as const;
+const serviceNames = {
+  repair: "Repair or troubleshoot",
+  maintenance: "Maintenance",
+  upgrade: "Upgrade or expand",
+  reinstallation: "Remove and reinstall",
+} as const;
+const surveyNames = {
+  new: "New installation",
+  upgrade: "Existing system upgrade",
+  project: "Business or farm project",
+  unknown: "Scope undecided",
+} as const;
+
 // Counts whole characters, so an emoji is never cut into a lone surrogate.
 function truncate(s: string, max: number): string {
   const chars = Array.from(s);
@@ -54,12 +74,16 @@ export function formatTelegram(lead: Lead): {
   replyMarkup: { inline_keyboard: { text: string; url: string }[][] };
 } {
   const lines = [
-    `🔆 New solar lead · ${escapeHtml(capitalize(lead.useCase))}`,
+    `🔆 New solar lead · ${intentNames[lead.intent]}`,
     `👤 ${escapeHtml(lead.name)}`,
     `📞 ${escapeHtml(lead.phone)}`,
     `📍 ${escapeHtml(lead.location)}`,
-    `💰 ${escapeHtml(lead.budget)}`,
-    `🛠 ${lead.services.map(escapeHtml).join(", ")}`,
+    ...(lead.useCase ? [`🏠 ${capitalize(lead.useCase)}`] : []),
+    ...(lead.budget ? [`💰 ${escapeHtml(lead.budget)}`] : []),
+    ...(lead.services.length ? [`🛠 ${lead.services.map(escapeHtml).join(", ")}`] : []),
+    ...(lead.serviceType ? [`🔧 ${serviceNames[lead.serviceType]}`] : []),
+    ...(lead.surveyFor ? [`📋 ${surveyNames[lead.surveyFor]}`] : []),
+    ...(lead.installationHelp ? ["🔩 Installation help requested"] : []),
     ...(lead.explanation ? [`📝 ${escapeHtml(lead.explanation)}`] : []),
     escapeHtml(source(lead)),
   ];
@@ -83,16 +107,20 @@ export function formatTelegram(lead: Lead): {
 }
 
 export function formatEmail(lead: Lead): { subject: string; html: string; text: string } {
-  const useCase = capitalize(lead.useCase);
-  const subject = `New lead: ${truncate(flat(lead.name), 60)}, ${truncate(flat(lead.location), 40)} (${useCase}, ${lead.budget})`;
+  const intent = intentNames[lead.intent];
+  const subject = `New lead: ${truncate(flat(lead.name), 60)}, ${truncate(flat(lead.location), 40)} (${intent}${lead.budget ? ", " + lead.budget : ""})`;
 
   const rows: [string, string][] = [
     ["Name", lead.name],
     ["Phone", lead.phone],
     ["Location", lead.location],
-    ["Use case", useCase],
-    ["Budget", lead.budget],
-    ["Services", lead.services.join(", ")],
+    ["Request", intent],
+    ["Setting", lead.useCase ? capitalize(lead.useCase) : ""],
+    ["Budget", lead.budget ?? ""],
+    ["Devices or equipment", lead.services.join(", ")],
+    ["Service", lead.serviceType ? serviceNames[lead.serviceType] : ""],
+    ["Assessment", lead.surveyFor ? surveyNames[lead.surveyFor] : ""],
+    ["Installation help", lead.installationHelp ? "Requested" : ""],
     ["Notes", lead.explanation],
     ["Source", source(lead)],
     ["GCLID", lead.attribution.gclid ?? ""],
