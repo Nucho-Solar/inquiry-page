@@ -81,6 +81,20 @@ const goals: { intent: Intent; icon: LucideIcon; title: string; detail: string }
   { intent: "survey", icon: MapPinned, title: "Get a site visit and quote", detail: "We visit before quoting. Transport is at your cost." },
 ];
 
+// The four goals and the "not sure" link: shown on the landing page, and again when the visitor goes back.
+function GoalChoices({ onChoose }: { onChoose: (intent: Intent) => void }) {
+  return (
+    <>
+      {goals.map((goal) => (
+        <Choice key={goal.intent} icon={goal.icon} title={goal.title} detail={goal.detail} onClick={() => onChoose(goal.intent)} />
+      ))}
+      <button type="button" className="enquiry-unsure" onClick={() => onChoose("unsure")}>
+        I'm not sure yet. Help me decide. <ArrowRight size={14} />
+      </button>
+    </>
+  );
+}
+
 const honeypotStyle = {
   position: "absolute", left: "-10000px", width: "1px", height: "1px", overflow: "hidden",
 } as const;
@@ -352,11 +366,8 @@ export default function InquiryForm() {
           </p>
           <p className="enquiry-landing-ask" id="enquiry-goals-label">What do you need?</p>
           <div className="enquiry-options enquiry-intent-list" role="group" aria-labelledby="enquiry-goals-label">
-            {goals.map((goal) => (
-              <Choice key={goal.intent} icon={goal.icon} title={goal.title} detail={goal.detail} onClick={() => chooseIntent(goal.intent)} />
-            ))}
+            <GoalChoices onChoose={chooseIntent} />
           </div>
-          <button type="button" className="enquiry-unsure" onClick={() => chooseIntent("unsure")}>I'm not sure yet. Help me decide. <ArrowRight size={14} /></button>
           <p className="enquiry-landing-note">Free quote. We call or WhatsApp you within 24 hours.</p>
         </main>
         <footer className="enquiry-landing-footer">
@@ -390,10 +401,7 @@ export default function InquiryForm() {
 
                         {step === "intent" && (
                           <div className="enquiry-options enquiry-intent-list">
-                            {goals.map((goal) => (
-                              <Choice key={goal.intent} icon={goal.icon} title={goal.title} detail={goal.detail} onClick={() => chooseIntent(goal.intent)} />
-                            ))}
-                            <button type="button" className="enquiry-unsure" onClick={() => chooseIntent("unsure")}>I'm not sure yet. Help me decide. <ArrowRight size={14} /></button>
+                            <GoalChoices onChoose={chooseIntent} />
                           </div>
                         )}
 
