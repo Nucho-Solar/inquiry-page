@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   budgetOptions,
   inquiryPayloadSchema,
+  isUuid,
   normalizePhone,
 } from "./inquirySchema";
 
@@ -18,6 +19,20 @@ describe("normalizePhone", () => {
 
   it("accepts numbers starting with 1", () => {
     expect(normalizePhone("0112345678")).toBe("+254112345678");
+  });
+
+  it.each([
+    "+254 0712 345 678",
+    "254 0712345678",
+    "0712.345.678",
+    "07-12 345 678",
+    "(0712) 345 678",
+  ])("normalizes the typed Kenyan mobile %s", (input) => {
+    expect(normalizePhone(input)).toBe("+254712345678");
+  });
+
+  it("drops a stray 0 after +254 on a landline too", () => {
+    expect(normalizePhone("+254 020 234 5678")).toBe("+254202345678");
   });
 
   it.each([
@@ -45,9 +60,27 @@ describe("normalizePhone", () => {
     "415 555 0100",
     "+0 123 456 7890",
     "+1234567890123456",
+    "+254 0 712 3456",
+    "0712 345 6789",
   ])("rejects %j", (input) => {
     expect(normalizePhone(input)).toBeNull();
   });
+});
+
+describe("isUuid", () => {
+  it("accepts what the payload schema accepts as a submissionId", () => {
+    const id = "3f1c2b8e-5a4d-4c6e-9b7a-1d2e3f4a5b6c";
+    expect(isUuid(id)).toBe(true);
+    expect(inquiryPayloadSchema.shape.submissionId.safeParse(id).success).toBe(true);
+  });
+
+  it.each(["", "not-a-uuid", "3f1c2b8e5a4d4c6e9b7a1d2e3f4a5b6c", 42, null, undefined, ["x"]])(
+    "rejects %j like the schema does",
+    (value) => {
+      expect(isUuid(value)).toBe(false);
+      expect(inquiryPayloadSchema.shape.submissionId.safeParse(value).success).toBe(false);
+    },
+  );
 });
 
 const validPayload = {

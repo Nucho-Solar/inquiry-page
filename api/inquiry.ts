@@ -1,5 +1,5 @@
 import { waitUntil } from "@vercel/functions";
-import { inquiryPayloadSchema, MIN_FILL_MS } from "../src/lib/inquirySchema.js";
+import { inquiryPayloadSchema, isUuid, MIN_FILL_MS } from "../src/lib/inquirySchema.js";
 import { forwardLead, sendEmail, sendTelegram } from "./_lib/channels.js";
 import { hasEmail, hasTelegram, type Env } from "./_lib/config.js";
 import { toLead } from "./_lib/lead.js";
@@ -48,6 +48,24 @@ export async function handleInquiry(
     return json(400, { ok: false, error: "invalid_json" });
   }
 
+  // Bots get the same success response as people, and nothing is sent. This runs before validation,
+  // so a bot that sends bad fields learns nothing from a 400. The fill time is measured by the
+  // browser with a monotonic clock, so no client wall clock is ever compared with the server clock.
+  // Drops are logged by id only, and only when the id is a UUID.
+  const peek = typeof raw === "object" && raw !== null && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+  // The real form always sends a string for website and a number for fillMs, so any other type is a bot too.
+  const dropReason =
+    peek.website !== undefined && (typeof peek.website !== "string" || peek.website.trim() !== "")
+      ? "honeypot"
+      : peek.fillMs !== undefined && (typeof peek.fillMs !== "number" || peek.fillMs < MIN_FILL_MS)
+        ? "too_fast"
+        : null;
+  if (dropReason) {
+    const leadId = isUuid(peek.submissionId) ? peek.submissionId : null;
+    console.error(JSON.stringify({ leadId, status: "dropped", reason: dropReason }));
+    return json(200, { ok: true });
+  }
+
   const parsed = inquiryPayloadSchema.safeParse(raw);
   if (!parsed.success) {
     const errors: Record<string, string> = {};
@@ -58,16 +76,6 @@ export async function handleInquiry(
     return json(400, { ok: false, errors });
   }
   const payload = parsed.data;
-
-  // Bots get the same success response as people, and nothing is sent. The fill
-  // time is measured by the browser with a monotonic clock, so no client wall
-  // clock is ever compared with the server clock. Drops are logged by id only.
-  const dropReason =
-    payload.website.trim() !== "" ? "honeypot" : payload.fillMs < MIN_FILL_MS ? "too_fast" : null;
-  if (dropReason) {
-    console.error(JSON.stringify({ leadId: payload.submissionId, status: "dropped", reason: dropReason }));
-    return json(200, { ok: true });
-  }
 
   if (!hasTelegram(env) && !hasEmail(env)) {
     console.error(JSON.stringify({ error: "not_configured" }));

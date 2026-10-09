@@ -13,18 +13,22 @@ export const budgetOptions = [
 // The browser measures the fill time and the function drops anything faster.
 export const MIN_FILL_MS = 3000;
 
-const KENYAN_MOBILE = /^(?:\+?254|0)?([71]\d{8})$/;
+// People type +254 0712 345 678, so a 0 after the country code is dropped.
+const KENYAN_MOBILE = /^(?:\+?2540?|0)?([71]\d{8})$/;
 // Landlines need the 0 or +254 prefix: 020 is Nairobi, 041 is Mombasa.
-const KENYAN_LANDLINE = /^(?:\+?254|0)([2-6]\d{8})$/;
+const KENYAN_LANDLINE = /^(?:\+?2540?|0)([2-6]\d{8})$/;
 // Any other country: a + sign, then 8 to 15 digits with no leading 0. +254 is never accepted here.
 const INTERNATIONAL = /^\+(?!254)[1-9]\d{7,14}$/;
 
 export function normalizePhone(input: string): string | null {
-  const cleaned = input.replace(/[\s\-()]/g, "");
+  const cleaned = input.replace(/[\s\-().]/g, "");
   const kenyan = KENYAN_MOBILE.exec(cleaned) ?? KENYAN_LANDLINE.exec(cleaned);
   if (kenyan) return `+254${kenyan[1]}`;
   return INTERNATIONAL.test(cleaned) ? cleaned : null;
 }
+
+// The same test the payload schema applies to submissionId, for code that has not validated a body yet.
+export const isUuid = (value: unknown): value is string => z.string().uuid().safeParse(value).success;
 
 export const attributionSchema = z.object({
   gclid: z.string().max(200).optional(),

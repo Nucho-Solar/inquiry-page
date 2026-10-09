@@ -324,6 +324,64 @@ describe("handleInquiry spam checks", () => {
   });
 });
 
+describe("handleInquiry bot checks run before validation", () => {
+  it.each([
+    ["a filled honeypot", { website: "x" }],
+    ["a fill time under 3 seconds", { fillMs: 100 }],
+  ])("fakes success for %s even when other fields are invalid", async (_label, override) => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await handleInquiry(post(payload({ ...override, name: "", phone: "1" })), FULL_ENV, NOW);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+    expectNoSenderCalled();
+  });
+
+  it.each([
+    ["a honeypot sent as a list", { website: ["x"] }],
+    ["a honeypot sent as a number", { website: 123 }],
+    ["a honeypot sent as null", { website: null }],
+    ["a fill time sent as a string", { fillMs: "10" }],
+    ["a fill time sent as null", { fillMs: null }],
+  ])("fakes success for %s", async (_label, override) => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await handleInquiry(post(payload(override)), FULL_ENV, NOW);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+    expectNoSenderCalled();
+  });
+
+  it("fakes success for a bot that omits most fields", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await handleInquiry(post({ website: "http://spam.example" }), FULL_ENV, NOW);
+    expect(res.status).toBe(200);
+    expectNoSenderCalled();
+  });
+
+  it("logs the lead id when the body has a valid one, and null when it has none", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    await handleInquiry(post({ website: "x", submissionId: ID }), FULL_ENV, NOW);
+    await handleInquiry(post({ website: "x", submissionId: "<script>Jane 0712345678" }), FULL_ENV, NOW);
+    await handleInquiry(post({ website: "x" }), FULL_ENV, NOW);
+    const logged = error.mock.calls.map((args) => JSON.parse(String(args[0])));
+    expect(logged).toEqual([
+      { leadId: ID, status: "dropped", reason: "honeypot" },
+      { leadId: null, status: "dropped", reason: "honeypot" },
+      { leadId: null, status: "dropped", reason: "honeypot" },
+    ]);
+  });
+
+  it.each([["null"], ["[]"], ['"text"'], ["42"]])("still returns 400 for the JSON value %s", async (text) => {
+    const res = await handleInquiry(post(text), FULL_ENV, NOW);
+    expect(res.status).toBe(400);
+    expectNoSenderCalled();
+  });
+
+  it("still returns 400 with errors for a slow, empty-honeypot submission with a bad field", async () => {
+    const res = await handleInquiry(post(payload({ name: "" })), FULL_ENV, NOW);
+    expect(res.status).toBe(400);
+  });
+});
+
 describe("handleInquiry dropped spam log", () => {
   it.each([
     ["honeypot", { website: "x" }],

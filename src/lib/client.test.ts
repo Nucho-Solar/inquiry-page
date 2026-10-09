@@ -3,7 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { InquiryPayload } from "@/lib/inquirySchema";
 import { readAttribution } from "@/lib/attribution";
 import { submitInquiry } from "@/lib/submitInquiry";
-import { trackConversion } from "@/lib/trackConversion";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { ADS_ACCOUNT, trackConversion } from "@/lib/trackConversion";
 
 const payload: InquiryPayload = {
   useCase: "home",
@@ -19,8 +21,8 @@ const payload: InquiryPayload = {
   attribution: {},
 };
 
-const respond = (status: number) =>
-  vi.fn().mockResolvedValue(new Response("{}", { status }));
+const respond = (status: number, body = '{"ok":true}') =>
+  vi.fn().mockResolvedValue(new Response(body, { status }));
 
 describe("submitInquiry", () => {
   it("posts JSON to /api/inquiry", async () => {
@@ -36,6 +38,19 @@ describe("submitInquiry", () => {
 
   it("maps 200 to ok", async () => {
     expect(await submitInquiry(payload, respond(200))).toEqual({ ok: true });
+  });
+
+  it.each([
+    ["an empty body", ""],
+    ["an HTML page", "<html>Sign in to the Wi-Fi</html>"],
+    ["an object without ok", "{}"],
+    ["ok set to false", '{"ok":false}'],
+    ["ok as a string", '{"ok":"true"}'],
+  ])("maps a 200 with %s to server", async (_label, body) => {
+    expect(await submitInquiry(payload, respond(200, body))).toEqual({
+      ok: false,
+      reason: "server",
+    });
   });
 
   it("maps 400 to validation", async () => {
@@ -154,6 +169,15 @@ describe("readAttribution", () => {
     expect(
       readAttribution("?gclid=g&utm_source=s&utm_medium=m&utm_campaign=c"),
     ).toEqual({ gclid: "g", utm_source: "s", utm_medium: "m", utm_campaign: "c" });
+  });
+});
+
+describe("Google Ads account id", () => {
+  it("is the same single id in index.html as in trackConversion", () => {
+    const html = readFileSync(resolve(process.cwd(), "index.html"), "utf8");
+    const ids = html.match(/AW-\d+/g) ?? [];
+    expect(ids.length).toBeGreaterThanOrEqual(2);
+    expect(new Set(ids)).toEqual(new Set([ADS_ACCOUNT]));
   });
 });
 

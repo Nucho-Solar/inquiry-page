@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { InquiryPayload } from "../../src/lib/inquirySchema.js";
-import { escapeHtml, formatEmail, formatTelegram, nairobiTime } from "./format.js";
+import { escapeHtml, formatEmail, formatTelegram, nairobiDateTime } from "./format.js";
 import { toLead, type Lead } from "./lead.js";
 
 const NOW = new Date("2026-10-08T19:44:00.000Z");
@@ -37,9 +37,13 @@ describe("toLead", () => {
   });
 });
 
-describe("nairobiTime", () => {
-  it("formats UTC ISO as Nairobi time", () => {
-    expect(nairobiTime("2026-10-08T19:44:00.000Z")).toBe("22:44 EAT");
+describe("nairobiDateTime", () => {
+  it("formats UTC ISO as a Nairobi date and time", () => {
+    expect(nairobiDateTime("2026-10-08T19:44:00.000Z")).toBe("8 Oct 22:44 EAT");
+  });
+
+  it("moves to the next day when Nairobi is already past midnight", () => {
+    expect(nairobiDateTime("2026-12-31T21:30:00.000Z")).toBe("1 Jan 00:30 EAT");
   });
 });
 
@@ -60,7 +64,7 @@ describe("formatTelegram", () => {
       "💰 KSh 100,000 - 250,000",
       "🛠 Solar panels, Battery storage",
       "📝 Need backup for the fridge",
-      "Google Ads · nairobi-home · 22:44 EAT",
+      "Google Ads · nairobi-home · 8 Oct 22:44 EAT",
     ]);
   });
 
@@ -73,18 +77,41 @@ describe("formatTelegram", () => {
       "📍 Karen",
       "💰 KSh 100,000 - 250,000",
       "🛠 Solar panels, Battery storage",
-      "Google Ads · nairobi-home · 22:44 EAT",
+      "Google Ads · nairobi-home · 8 Oct 22:44 EAT",
     ]);
   });
 
   it("uses Direct and omits the campaign when there is no attribution", () => {
     const { text } = formatTelegram(lead({ attribution: {}, explanation: "" }));
-    expect(text.endsWith("Direct · 22:44 EAT")).toBe(true);
+    expect(text.endsWith("Direct · 8 Oct 22:44 EAT")).toBe(true);
   });
 
   it("shows Google Ads without a campaign segment when utm_campaign is absent", () => {
     const { text } = formatTelegram(lead({ attribution: { gclid: "x" }, explanation: "" }));
-    expect(text.endsWith("Google Ads · 22:44 EAT")).toBe(true);
+    expect(text.endsWith("Google Ads · 8 Oct 22:44 EAT")).toBe(true);
+  });
+
+  it.each([
+    [{ utm_source: "facebook", utm_medium: "cpc" }, "facebook / cpc · 8 Oct 22:44 EAT"],
+    [{ utm_source: "facebook" }, "facebook · 8 Oct 22:44 EAT"],
+    [
+      { utm_source: "facebook", utm_medium: "cpc", utm_campaign: "launch" },
+      "facebook / cpc · launch · 8 Oct 22:44 EAT",
+    ],
+    [{ utm_medium: "cpc" }, "Direct · 8 Oct 22:44 EAT"],
+    [{ gclid: "x", utm_source: "google" }, "Google Ads · 8 Oct 22:44 EAT"],
+  ])("shows the campaign source %j", (attribution, expected) => {
+    const { text } = formatTelegram(lead({ attribution, explanation: "" }));
+    expect(text.endsWith(expected)).toBe(true);
+  });
+
+  it("shortens a very long utm_source and escapes it", () => {
+    const { text } = formatTelegram(
+      lead({ attribution: { utm_source: `<i>${"s".repeat(300)}` }, explanation: "" }),
+    );
+    const last = text.split("\n").at(-1) as string;
+    expect(last).not.toContain("<i>");
+    expect(last.length).toBeLessThan(80);
   });
 
   it("builds WhatsApp and Maps buttons", () => {
@@ -175,6 +202,13 @@ describe("formatEmail subject", () => {
     const { subject } = formatEmail(lead({ name: "Eve\r\nBcc: x@y.z" }));
     expect(subject).not.toMatch(/[\r\n]/);
     expect(subject).toContain("Bcc: x@y.z");
+  });
+
+  it("does not cut an emoji in half when it truncates", () => {
+    const { subject } = formatEmail(lead({ name: `${"a".repeat(58)}😀${"b".repeat(20)}` }));
+    const loneSurrogate = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
+    expect(loneSurrogate.test(subject)).toBe(false);
+    expect(subject).toContain("😀");
   });
 
   it("truncates long names so the subject stays short", () => {

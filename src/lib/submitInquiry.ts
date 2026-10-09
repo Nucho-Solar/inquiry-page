@@ -29,7 +29,12 @@ export async function submitInquiry(
       body: JSON.stringify(payload),
       signal,
     });
-    if (res.ok) return { ok: true };
+    if (res.ok) {
+      // A captive portal or a proxy can answer 200 with a page that is not ours.
+      const body: unknown = await res.json().catch(() => null);
+      const acknowledged = typeof body === "object" && body !== null && (body as { ok?: unknown }).ok === true;
+      return acknowledged ? { ok: true } : { ok: false, reason: "server" };
+    }
     if (res.status === 400) return { ok: false, reason: "validation" };
     return { ok: false, reason: "server" };
   } catch {

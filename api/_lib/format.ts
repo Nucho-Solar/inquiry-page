@@ -2,13 +2,18 @@ import type { Lead } from "./lead.js";
 
 const nairobiFormat = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Africa/Nairobi",
+  day: "numeric",
+  month: "short",
   hour: "2-digit",
   minute: "2-digit",
   hour12: false,
 });
 
-export function nairobiTime(iso: string): string {
-  return `${nairobiFormat.format(new Date(iso))} EAT`;
+export function nairobiDateTime(iso: string): string {
+  const parts = Object.fromEntries(
+    nairobiFormat.formatToParts(new Date(iso)).map((part) => [part.type, part.value]),
+  );
+  return `${parts.day} ${parts.month} ${parts.hour}:${parts.minute} EAT`;
 }
 
 export function escapeHtml(s: string): string {
@@ -23,14 +28,25 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+// Counts whole characters, so an emoji is never cut into a lone surrogate.
 function truncate(s: string, max: number): string {
-  return s.length > max ? `${s.slice(0, max - 1)}…` : s;
+  const chars = Array.from(s);
+  return chars.length > max ? `${chars.slice(0, max - 1).join("")}…` : s;
 }
 
+const flat = (s: string) => s.replace(/[\r\n\u2028\u2029]+/g, " ");
+
+// Campaign values come from the visitor's URL: keep them on one line and short.
+const tag = (s: string) => truncate(flat(s), 40);
+
 function source(lead: Lead): string {
-  const origin = lead.attribution.gclid ? "Google Ads" : "Direct";
-  const campaign = lead.attribution.utm_campaign;
-  return [origin, ...(campaign ? [campaign] : []), nairobiTime(lead.receivedAt)].join(" · ");
+  const { gclid, utm_source, utm_medium, utm_campaign } = lead.attribution;
+  const origin = gclid
+    ? "Google Ads"
+    : utm_source
+      ? [tag(utm_source), ...(utm_medium ? [tag(utm_medium)] : [])].join(" / ")
+      : "Direct";
+  return [origin, ...(utm_campaign ? [tag(utm_campaign)] : []), nairobiDateTime(lead.receivedAt)].join(" · ");
 }
 
 export function formatTelegram(lead: Lead): {
@@ -68,7 +84,6 @@ export function formatTelegram(lead: Lead): {
 
 export function formatEmail(lead: Lead): { subject: string; html: string; text: string } {
   const useCase = capitalize(lead.useCase);
-  const flat = (s: string) => s.replace(/[\r\n\u2028\u2029]+/g, " ");
   const subject = `New lead: ${truncate(flat(lead.name), 60)}, ${truncate(flat(lead.location), 40)} (${useCase}, ${lead.budget})`;
 
   const rows: [string, string][] = [

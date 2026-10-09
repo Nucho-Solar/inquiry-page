@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hasEmail, hasForward, hasTelegram, type Env } from "./config.js";
+import { emailRecipients, hasEmail, hasForward, hasTelegram, type Env } from "./config.js";
 
 const cases: [string, (env: Env) => boolean, string[]][] = [
   ["hasTelegram", hasTelegram, ["TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"]],
@@ -28,5 +28,27 @@ describe.each(cases)("%s", (_name, fn, keys) => {
     expect(fn({ ...full, [key]: undefined })).toBe(false);
     expect(fn({ ...full, [key]: "" })).toBe(false);
     expect(fn({ ...full, [key]: " \t\n " })).toBe(false);
+  });
+});
+
+describe("emailRecipients", () => {
+  it("splits on commas, trims and drops empty entries", () => {
+    expect(emailRecipients({ LEAD_EMAIL_TO: " a@x.com ,, b@x.com , " })).toEqual(["a@x.com", "b@x.com"]);
+  });
+
+  it.each([undefined, "", " ", ",", " , ,"])("returns no recipients for %j", (value) => {
+    expect(emailRecipients({ LEAD_EMAIL_TO: value })).toEqual([]);
+  });
+});
+
+describe("hasEmail with only separators in LEAD_EMAIL_TO", () => {
+  const ok: Env = { RESEND_API_KEY: "k", RESEND_FROM: "f@x.com" };
+
+  it.each([",", " , ", ",,,"])("is false for %j", (value) => {
+    expect(hasEmail({ ...ok, LEAD_EMAIL_TO: value })).toBe(false);
+  });
+
+  it("is true with one real recipient among separators", () => {
+    expect(hasEmail({ ...ok, LEAD_EMAIL_TO: ", a@x.com," })).toBe(true);
   });
 });

@@ -146,6 +146,48 @@ describe("InquiryForm", () => {
     expect(submitMock.mock.calls[0][0].services).toEqual(["Solar Lighting Kit"]);
   });
 
+  it("sends a custom device that was typed but not confirmed with Enter", async () => {
+    submitMock.mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<InquiryForm />);
+    await fillValidForm(user);
+    await user.click(screen.getByRole("button", { name: "Other" }));
+    await user.type(screen.getByLabelText(/add custom devices/i), "Solar gate motor");
+    await user.click(submitButton());
+    await screen.findByText(/^Thanks Jane/);
+
+    expect(submitMock.mock.calls[0][0].services).toEqual(["Solar Lighting Kit", "Solar gate motor"]);
+  });
+
+  it("does not repeat a typed custom device that was already added with Enter", async () => {
+    submitMock.mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<InquiryForm />);
+    await fillValidForm(user);
+    await user.click(screen.getByRole("button", { name: "Other" }));
+    const input = screen.getByLabelText(/add custom devices/i);
+    await user.type(input, "Weather station{Enter}");
+    await user.type(input, "Weather station");
+    await user.click(submitButton());
+    await screen.findByText(/^Thanks Jane/);
+
+    expect(submitMock.mock.calls[0][0].services).toEqual(["Solar Lighting Kit", "Weather station"]);
+  });
+
+  it("blocks the submit with a message when the typed custom device is too short", async () => {
+    const user = userEvent.setup();
+    render(<InquiryForm />);
+    await fillValidForm(user);
+    await user.click(screen.getByRole("button", { name: "Other" }));
+    await user.type(screen.getByLabelText(/add custom devices/i), "ab");
+    await user.click(submitButton());
+
+    expect(
+      await screen.findByText("Device name must be between 3-50 characters", { selector: "p.text-destructive" }),
+    ).toBeInTheDocument();
+    expect(submitMock).not.toHaveBeenCalled();
+  });
+
   it("keeps the custom devices while Other stays on", async () => {
     submitMock.mockResolvedValue({ ok: true });
     const user = userEvent.setup();

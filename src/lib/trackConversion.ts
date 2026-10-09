@@ -1,4 +1,4 @@
-const ADS_ACCOUNT = "AW-16856571719";
+export const ADS_ACCOUNT = "AW-16856571719";
 
 export function trackConversion(
   label: string | undefined,

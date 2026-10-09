@@ -145,6 +145,16 @@ describe("sendTelegram", () => {
   });
 });
 
+describe("response bodies", () => {
+  it.each([200, 429])("cancels the unread body of a %i reply", async (status) => {
+    const res = new Response("upstream body", { status });
+    const cancel = vi.spyOn(res.body as ReadableStream, "cancel");
+    fetchMock.mockResolvedValue(res);
+    await sendTelegram(lead, TG_ENV);
+    expect(cancel).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("sendEmail", () => {
   it("skips without calling fetch when RESEND_API_KEY is missing", async () => {
     const { RESEND_API_KEY: _omit, ...env } = EMAIL_ENV;
@@ -165,7 +175,7 @@ describe("sendEmail", () => {
     expect(init.method).toBe("POST");
     expect(headers.get("authorization")).toBe("Bearer re_secret_key");
     expect(headers.get("content-type")).toBe("application/json");
-    expect(headers.get("idempotency-key")).toBe(lead.id);
+    expect(headers.get("idempotency-key")).toMatch(new RegExp(`^${lead.id}-[0-9a-f]{16}$`));
     expect(init.signal).toBeInstanceOf(AbortSignal);
     expect(init.redirect).toBe("error");
     expect(JSON.parse(body)).toEqual({
@@ -173,6 +183,40 @@ describe("sendEmail", () => {
       to: ["a@x.com", "b@x.com"],
       ...formatEmail(lead),
     });
+  });
+
+  it("repeats the idempotency key for an identical retry and changes it when the lead is edited", async () => {
+    respond(200);
+    await sendEmail(lead, EMAIL_ENV);
+    respond(200);
+    await sendEmail(lead, EMAIL_ENV);
+    respond(200);
+    await sendEmail({ ...lead, phone: "+254700111222" }, EMAIL_ENV);
+
+    const keys = [0, 1, 2].map((i) => call(i).headers.get("idempotency-key"));
+    expect(keys[1]).toBe(keys[0]);
+    expect(keys[2]).not.toBe(keys[0]);
+    expect(keys[2]).toMatch(new RegExp(`^${lead.id}-`));
+  });
+
+  it("repeats the idempotency key for the same lead retried a minute later", async () => {
+    respond(200);
+    await sendEmail(lead, EMAIL_ENV);
+    respond(200);
+    await sendEmail({ ...lead, receivedAt: "2026-10-08T19:46:00.000Z" }, EMAIL_ENV);
+
+    expect(call(1).headers.get("idempotency-key")).toBe(call(0).headers.get("idempotency-key"));
+  });
+
+  it("counts Resend's 409 for a repeated key as delivered", async () => {
+    respond(409);
+    expect(await sendEmail(lead, EMAIL_ENV)).toEqual({ channel: "email", status: "ok" });
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it("does not count a 409 from Telegram as delivered", async () => {
+    respond(409);
+    expect(await sendTelegram(lead, TG_ENV)).toEqual({ channel: "telegram", status: "failed" });
   });
 
   it("drops empty recipients", async () => {
