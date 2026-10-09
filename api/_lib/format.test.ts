@@ -204,6 +204,13 @@ describe("formatEmail subject", () => {
     expect(subject).toContain("Bcc: x@y.z");
   });
 
+  it("does not cut an emoji in half when it truncates", () => {
+    const { subject } = formatEmail(lead({ name: `${"a".repeat(58)}😀${"b".repeat(20)}` }));
+    const loneSurrogate = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
+    expect(loneSurrogate.test(subject)).toBe(false);
+    expect(subject).toContain("😀");
+  });
+
   it("truncates long names so the subject stays short", () => {
     const { subject } = formatEmail(lead({ name: "N".repeat(5000), location: "L".repeat(5000) }));
     expect(subject.length).toBeLessThan(200);

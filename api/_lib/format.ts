@@ -28,8 +28,10 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+// Counts whole characters, so an emoji is never cut into a lone surrogate.
 function truncate(s: string, max: number): string {
-  return s.length > max ? `${s.slice(0, max - 1)}…` : s;
+  const chars = Array.from(s);
+  return chars.length > max ? `${chars.slice(0, max - 1).join("")}…` : s;
 }
 
 const flat = (s: string) => s.replace(/[\r\n\u2028\u2029]+/g, " ");
