@@ -19,8 +19,8 @@ const payload: InquiryPayload = {
   attribution: {},
 };
 
-const respond = (status: number) =>
-  vi.fn().mockResolvedValue(new Response("{}", { status }));
+const respond = (status: number, body = '{"ok":true}') =>
+  vi.fn().mockResolvedValue(new Response(body, { status }));
 
 describe("submitInquiry", () => {
   it("posts JSON to /api/inquiry", async () => {
@@ -36,6 +36,19 @@ describe("submitInquiry", () => {
 
   it("maps 200 to ok", async () => {
     expect(await submitInquiry(payload, respond(200))).toEqual({ ok: true });
+  });
+
+  it.each([
+    ["an empty body", ""],
+    ["an HTML page", "<html>Sign in to the Wi-Fi</html>"],
+    ["an object without ok", "{}"],
+    ["ok set to false", '{"ok":false}'],
+    ["ok as a string", '{"ok":"true"}'],
+  ])("maps a 200 with %s to server", async (_label, body) => {
+    expect(await submitInquiry(payload, respond(200, body))).toEqual({
+      ok: false,
+      reason: "server",
+    });
   });
 
   it("maps 400 to validation", async () => {
