@@ -54,10 +54,11 @@ export async function handleInquiry(
   // browser with a monotonic clock, so no client wall clock is ever compared with the server clock.
   // Drops are logged by id only, and only when the id is a UUID.
   const peek = typeof raw === "object" && raw !== null && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+  // The real form always sends a string for website and a number for fillMs, so any other type is a bot too.
   const dropReason =
-    typeof peek.website === "string" && peek.website.trim() !== ""
+    peek.website !== undefined && (typeof peek.website !== "string" || peek.website.trim() !== "")
       ? "honeypot"
-      : typeof peek.fillMs === "number" && peek.fillMs < MIN_FILL_MS
+      : peek.fillMs !== undefined && (typeof peek.fillMs !== "number" || peek.fillMs < MIN_FILL_MS)
         ? "too_fast"
         : null;
   if (dropReason) {

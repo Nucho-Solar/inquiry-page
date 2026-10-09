@@ -336,6 +336,20 @@ describe("handleInquiry bot checks run before validation", () => {
     expectNoSenderCalled();
   });
 
+  it.each([
+    ["a honeypot sent as a list", { website: ["x"] }],
+    ["a honeypot sent as a number", { website: 123 }],
+    ["a honeypot sent as null", { website: null }],
+    ["a fill time sent as a string", { fillMs: "10" }],
+    ["a fill time sent as null", { fillMs: null }],
+  ])("fakes success for %s", async (_label, override) => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await handleInquiry(post(payload(override)), FULL_ENV, NOW);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+    expectNoSenderCalled();
+  });
+
   it("fakes success for a bot that omits most fields", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     const res = await handleInquiry(post({ website: "http://spam.example" }), FULL_ENV, NOW);
