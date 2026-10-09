@@ -21,6 +21,20 @@ describe("normalizePhone", () => {
   });
 
   it.each([
+    "+254 0712 345 678",
+    "254 0712345678",
+    "0712.345.678",
+    "07-12 345 678",
+    "(0712) 345 678",
+  ])("normalizes the typed Kenyan mobile %s", (input) => {
+    expect(normalizePhone(input)).toBe("+254712345678");
+  });
+
+  it("drops a stray 0 after +254 on a landline too", () => {
+    expect(normalizePhone("+254 020 234 5678")).toBe("+254202345678");
+  });
+
+  it.each([
     ["020 234 5678", "+254202345678"],
     ["+254 20 234 5678", "+254202345678"],
     ["041 2345678", "+254412345678"],
@@ -45,6 +59,8 @@ describe("normalizePhone", () => {
     "415 555 0100",
     "+0 123 456 7890",
     "+1234567890123456",
+    "+254 0 712 3456",
+    "0712 345 6789",
   ])("rejects %j", (input) => {
     expect(normalizePhone(input)).toBeNull();
   });
