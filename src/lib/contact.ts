@@ -3,7 +3,11 @@ const DEFAULT_DIGITS = "254758330507";
 // The number shown to visitors. Only the digits are kept, so +254 700-111-222 and 254700111222 are the same.
 export function contactDigits(value: string | undefined = import.meta.env.VITE_CONTACT_PHONE): string {
   const digits = (value ?? "").replace(/\D/g, "");
-  return digits || DEFAULT_DIGITS;
+  if (!digits) return DEFAULT_DIGITS;
+  // tel: and wa.me links need the international form, so 0758 330 507 and 758 330 507 become 254758330507.
+  if (/^0[17]\d{8}$/.test(digits)) return `254${digits.slice(1)}`;
+  if (/^[17]\d{8}$/.test(digits)) return `254${digits}`;
+  return digits;
 }
 
 // A Kenyan number is shown the way people dial it: 0758 330 507.
