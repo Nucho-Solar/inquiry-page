@@ -5,6 +5,7 @@ import { hasEmail, hasTelegram, type Env } from "./_lib/config.js";
 import { toLead } from "./_lib/lead.js";
 
 const MAX_BODY_BYTES = 10240;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function json(status: number, body: unknown, extraHeaders: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {
@@ -48,6 +49,23 @@ export async function handleInquiry(
     return json(400, { ok: false, error: "invalid_json" });
   }
 
+  // Bots get the same success response as people, and nothing is sent. This runs before validation,
+  // so a bot that sends bad fields learns nothing from a 400. The fill time is measured by the
+  // browser with a monotonic clock, so no client wall clock is ever compared with the server clock.
+  // Drops are logged by id only, and only when the id is a UUID.
+  const peek = typeof raw === "object" && raw !== null && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+  const dropReason =
+    typeof peek.website === "string" && peek.website.trim() !== ""
+      ? "honeypot"
+      : typeof peek.fillMs === "number" && peek.fillMs < MIN_FILL_MS
+        ? "too_fast"
+        : null;
+  if (dropReason) {
+    const leadId = typeof peek.submissionId === "string" && UUID.test(peek.submissionId) ? peek.submissionId : null;
+    console.error(JSON.stringify({ leadId, status: "dropped", reason: dropReason }));
+    return json(200, { ok: true });
+  }
+
   const parsed = inquiryPayloadSchema.safeParse(raw);
   if (!parsed.success) {
     const errors: Record<string, string> = {};
@@ -58,16 +76,6 @@ export async function handleInquiry(
     return json(400, { ok: false, errors });
   }
   const payload = parsed.data;
-
-  // Bots get the same success response as people, and nothing is sent. The fill
-  // time is measured by the browser with a monotonic clock, so no client wall
-  // clock is ever compared with the server clock. Drops are logged by id only.
-  const dropReason =
-    payload.website.trim() !== "" ? "honeypot" : payload.fillMs < MIN_FILL_MS ? "too_fast" : null;
-  if (dropReason) {
-    console.error(JSON.stringify({ leadId: payload.submissionId, status: "dropped", reason: dropReason }));
-    return json(200, { ok: true });
-  }
 
   if (!hasTelegram(env) && !hasEmail(env)) {
     console.error(JSON.stringify({ error: "not_configured" }));
