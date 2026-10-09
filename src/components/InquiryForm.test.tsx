@@ -35,7 +35,8 @@ describe("InquiryForm landing page", () => {
       screen.getByRole("heading", { level: 1, name: "Get a free solar quote for your home, office or farm" }),
     ).toBeInTheDocument();
     expect(screen.getByText(/Answer 2 or 3 quick questions/)).toHaveTextContent("No technical knowledge needed.");
-    expect(screen.getByText("Free quote. We call or WhatsApp you within 24 hours.")).toBeInTheDocument();
+    // The promise lives on the last step and the success screen. A note under the goals crowded the page.
+    expect(screen.queryByText(/Free quote\. We call or WhatsApp/)).not.toBeInTheDocument();
     for (const goal of [
       "Power my home, office or farm",
       "Buy panels, batteries or an inverter",

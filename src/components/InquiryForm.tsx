@@ -368,7 +368,6 @@ export default function InquiryForm() {
           <div className="enquiry-options enquiry-intent-list" role="group" aria-labelledby="enquiry-goals-label">
             <GoalChoices onChoose={chooseIntent} />
           </div>
-          <p className="enquiry-landing-note">Free quote. We call or WhatsApp you within 24 hours.</p>
         </main>
         <footer className="enquiry-landing-footer">
           <p>Nucho Solar. Serving homes, offices and farms across Kenya.</p>
