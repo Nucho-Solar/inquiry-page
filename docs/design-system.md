@@ -22,6 +22,8 @@ These are the screens reviewed in the enquiry design conversation. The existing 
 - Muted blue-grey `hsl(192 13% 45%)`: supporting text.
 - Outfit for display headings; DM Sans for labels, fields, and body copy. Arial and sans-serif are fallbacks.
 
+The storefront's roof-and-sun logo is used in two supplied colourways: yellow and white lettering on the dark hero/sidebar, and dark lettering with a green tagline in the light mobile form header. The favicon keeps the roof-and-sun mark without tiny unreadable lettering.
+
 Enquiry colours and layout live in `src/styles/enquiry.css` to keep the rest of the app's theme untouched; generated `src/components/ui/` components remain untouched.
 
 ## Interaction and accessibility

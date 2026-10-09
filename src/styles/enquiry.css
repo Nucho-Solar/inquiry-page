@@ -66,25 +66,9 @@
   align-items: center;
   padding: 27px 6vw;
 }
-.enquiry-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font: 600 20px "Outfit", Arial, sans-serif;
-  letter-spacing: .025em;
-  white-space: nowrap;
-}
-.enquiry-brand b, .enquiry-mobile-brand b { color: hsl(44 87% 68%); }
-.enquiry-brand-icon {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  margin-right: 4px;
-  border-radius: 50%;
-  background: var(--enquiry-yellow);
-  color: var(--enquiry-navy);
-}
+.enquiry-brand-logo { display: block; width: auto; object-fit: contain; }
+.enquiry-brand-logo-dark { height: 108px; }
+.enquiry-brand-logo-light { display: none; height: 66px; }
 .enquiry-header-caption { color: hsl(190 30% 84%); font-size: 13px; }
 .enquiry-landing-content { margin-block: auto; padding: 40px 6vw 70px; }
 .enquiry-landing-content > * { max-width: 640px; }
@@ -178,7 +162,6 @@
 .enquiry-topbar { display: flex; flex: none; align-items: center; justify-content: space-between; height: 92px; padding: 0 clamp(32px, 6vw, 95px); }
 .enquiry-close { display: grid; place-items: center; width: 38px; height: 38px; border: 0; border-radius: 50%; background: hsl(150 16% 93%); color: hsl(198 45% 26%); }
 .enquiry-close:hover { background: hsl(150 20% 87%); }
-.enquiry-mobile-brand { display: none; font: 700 17px "Outfit", Arial, sans-serif; }
 .enquiry-step-number { color: hsl(191 13% 47%); font-size: 12px; font-weight: 800; letter-spacing: .08em; }
 .enquiry-progress { height: 5px; flex: none; background: hsl(150 15% 90%); }
 .enquiry-progress span { display: block; height: 100%; background: hsl(43 73% 57%); transition: width .4s ease; }
@@ -258,8 +241,7 @@
   .enquiry-ribbon { padding: 8px; font-size: 9px; }
   .enquiry-landing { min-height: calc(100dvh - 26px); }
   .enquiry-header { padding: 19px 22px; }
-  .enquiry-brand { font-size: 16px; }
-  .enquiry-brand-icon { width: 32px; height: 32px; }
+  .enquiry-header .enquiry-brand-logo-dark { height: 96px; }
   .enquiry-header-caption { display: none; }
   .enquiry-landing::before { background: linear-gradient(90deg, hsl(207 77% 15% / .95), hsl(207 77% 15% / .78)); }
   .enquiry-landing-content { padding: 40px 22px 45px; }
@@ -272,8 +254,8 @@
   .enquiry-dialog { display: block; }
   .enquiry-sidebar { display: none; }
   .enquiry-wizard-main { height: 100dvh; }
-  .enquiry-topbar { height: 72px; padding: 0 22px; }
-  .enquiry-mobile-brand { display: block; }
+  .enquiry-topbar { height: 78px; padding: 0 22px; }
+  .enquiry-brand-logo-light { display: block; }
   .enquiry-step-number { font-size: 11px; }
   .enquiry-stage { align-items: flex-start; padding: 37px 22px 25px; }
   .enquiry-question { margin: 0; }

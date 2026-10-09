@@ -14,6 +14,8 @@ import { readAttribution } from "@/lib/attribution";
 import { trackConversion } from "@/lib/trackConversion";
 import { newId } from "@/lib/uuid";
 import heroImage from "@/assets/hero-solar.jpg";
+import darkLogo from "@/assets/nucho-logo.png";
+import lightLogo from "@/assets/nucho-logo-light.png";
 
 type Intent = (typeof inquiryIntents)[number];
 type ServiceType = (typeof serviceTypes)[number];
@@ -300,7 +302,7 @@ export default function InquiryForm() {
       <main className="enquiry-landing">
         <img src={heroImage} alt="" className="enquiry-hero-image" />
         <header className="enquiry-header">
-          <span className="enquiry-brand"><span className="enquiry-brand-icon"><Sun size={22} /></span>NUCHO <b>SOLAR</b></span>
+          <img src={darkLogo} alt="Nucho Solar Green Energy" className="enquiry-brand-logo enquiry-brand-logo-dark" />
           <span className="enquiry-header-caption">Solar, made for your needs</span>
         </header>
         <div className="enquiry-landing-content">
@@ -319,14 +321,14 @@ export default function InquiryForm() {
               <Dialog.Overlay className="enquiry-overlay" />
               <Dialog.Content className="enquiry-dialog">
                 <aside className="enquiry-sidebar">
-                  <span className="enquiry-brand"><span className="enquiry-brand-icon"><Sun size={22} /></span>NUCHO <b>SOLAR</b></span>
+                  <img src={darkLogo} alt="Nucho Solar Green Energy" className="enquiry-brand-logo enquiry-brand-logo-dark" />
                   <div className="enquiry-sidebar-message"><span className="enquiry-mini-rule" /><p>YOUR SOLAR ENQUIRY</p><h2>Tell us your goal. We will take it from there.</h2><span>Each request gets a short path. Describe things in your own words.</span></div>
                   <small>Nucho Solar enquiries</small>
                 </aside>
                 <div className="enquiry-wizard-main">
                   <div className="enquiry-topbar">
                     <Dialog.Close className="enquiry-close" aria-label="Close enquiry"><X size={21} /></Dialog.Close>
-                    <span className="enquiry-mobile-brand">NUCHO <b>SOLAR</b></span>
+                    <img src={lightLogo} alt="Nucho Solar Green Energy" className="enquiry-brand-logo enquiry-brand-logo-light" />
                     <span className="enquiry-step-number">{confirmation ? "Complete" : intent ? String(stepIndex + 1) + " of " + path.length : "Choose request"}</span>
                   </div>
                   <div className="enquiry-progress" role="progressbar" aria-label="Enquiry progress" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
