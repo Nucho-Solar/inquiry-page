@@ -25,3 +25,13 @@ describe("header call button on small screens", () => {
     expect(rule).toMatch(/clip/);
   });
 });
+
+// On a phone the landing text is cut to the offer and one sentence. The goals below name the audience.
+describe("landing text on phones", () => {
+  it("hides the audience tail of the headline and the second sentence of the subtitle", () => {
+    const mobile = css.slice(css.indexOf("@media (max-width: 720px)"));
+    for (const selector of ["enquiry-h1-tail", "enquiry-subtitle-extra"]) {
+      expect(mobile).toMatch(new RegExp(`\\.${selector}[^{}]*\\{[^}]*display:\\s*none`));
+    }
+  });
+});

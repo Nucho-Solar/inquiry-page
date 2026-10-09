@@ -50,6 +50,18 @@ describe("InquiryForm landing page", () => {
     expect(screen.queryByRole("button", { name: /find the right help/i })).not.toBeInTheDocument();
   });
 
+  it("marks the parts of the headline and subtitle that a phone screen drops", () => {
+    const { container } = render(<InquiryForm />);
+    expect(container.querySelector("h1 .enquiry-h1-tail")).toHaveTextContent("for your home, office or farm");
+    expect(container.querySelector("h1")).toHaveTextContent("Get a free solar quote");
+    expect(container.querySelector(".enquiry-landing-subtitle .enquiry-subtitle-extra")).toHaveTextContent(
+      "No technical knowledge needed.",
+    );
+    expect(container.querySelector(".enquiry-landing-subtitle")).toHaveTextContent(
+      "Answer 2 or 3 quick questions and we'll contact you with a quote.",
+    );
+  });
+
   it("states what each goal gets the visitor, including who pays for a site visit", () => {
     render(<InquiryForm />);
     expect(screen.getByRole("button", { name: /Get a site visit and quote/i })).toHaveAccessibleName(

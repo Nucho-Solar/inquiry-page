@@ -360,9 +360,9 @@ export default function InquiryForm() {
           </div>
         </header>
         <main className="enquiry-landing-content">
-          <h1>Get a <span className="enquiry-accent">free solar quote</span> for your home, office or farm</h1>
+          <h1>Get a <span className="enquiry-accent">free solar quote</span>{" "}<span className="enquiry-h1-tail">for your home, office or farm</span></h1>
           <p className="enquiry-landing-subtitle">
-            Answer 2 or 3 quick questions and we'll contact you with a quote. No technical knowledge needed.
+            Answer 2 or 3 quick questions and we'll contact you with a quote.{" "}<span className="enquiry-subtitle-extra">No technical knowledge needed.</span>
           </p>
           <p className="enquiry-landing-ask" id="enquiry-goals-label">What do you need?</p>
           <div className="enquiry-options enquiry-intent-list" role="group" aria-labelledby="enquiry-goals-label">
