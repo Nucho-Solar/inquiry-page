@@ -374,185 +374,185 @@ export default function InquiryForm() {
         </footer>
       </div>
       <Dialog.Root open={open} onOpenChange={changeOpen}>
-            <Dialog.Portal>
-              <Dialog.Overlay className="enquiry-overlay" />
-              <Dialog.Content className="enquiry-dialog">
-                <aside className="enquiry-sidebar">
-                  <img src={darkLogo} alt="Nucho Solar Green Energy" className="enquiry-brand-logo enquiry-brand-logo-dark" />
-                  <div className="enquiry-sidebar-message"><span className="enquiry-mini-rule" /><h2>Tell us what you need. We'll send you a quote.</h2><span>Use your own words. We'll sort out the technical details.</span></div>
-                  <a className="enquiry-sidebar-call" href={callHref(digits)}>Prefer to talk? Call {formatPhone(digits)}</a>
-                </aside>
-                <div className="enquiry-wizard-main">
-                  <div className="enquiry-topbar">
-                    <Dialog.Close className="enquiry-close" aria-label="Close enquiry"><X size={21} /></Dialog.Close>
-                    <img src={lightLogo} alt="Nucho Solar Green Energy" className="enquiry-brand-logo enquiry-brand-logo-light" />
-                    <span className="enquiry-step-number">{confirmation ? "Complete" : intent ? String(stepIndex + 1) + " of " + path.length : "Start"}</span>
-                  </div>
-                  <div className="enquiry-progress" role="progressbar" aria-label="Enquiry progress" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
-                    <span style={{ width: String(progress) + "%" }} />
-                  </div>
-                  <div className="enquiry-stage" key={confirmation ? "complete" : intent + "-" + stepIndex}>
-                    {confirmation ? <><Dialog.Title className="sr-only">Enquiry sent</Dialog.Title><Dialog.Description className="sr-only">Your enquiry was sent.</Dialog.Description><InquirySuccess name={confirmation.name} phone={confirmation.phone} /></> : (
-                      <div className="enquiry-question">
-                        {kicker && <p className="enquiry-kicker">{kicker}</p>}
-                        <Dialog.Title className="enquiry-title">{heading}</Dialog.Title>
-                        <Dialog.Description className="enquiry-hint">{hint}</Dialog.Description>
+        <Dialog.Portal>
+          <Dialog.Overlay className="enquiry-overlay" />
+          <Dialog.Content className="enquiry-dialog">
+            <aside className="enquiry-sidebar">
+              <img src={darkLogo} alt="Nucho Solar Green Energy" className="enquiry-brand-logo enquiry-brand-logo-dark" />
+              <div className="enquiry-sidebar-message"><span className="enquiry-mini-rule" /><h2>Tell us what you need. We'll send you a quote.</h2><span>Use your own words. We'll sort out the technical details.</span></div>
+              <a className="enquiry-sidebar-call" href={callHref(digits)}>Prefer to talk? Call {formatPhone(digits)}</a>
+            </aside>
+            <div className="enquiry-wizard-main">
+              <div className="enquiry-topbar">
+                <Dialog.Close className="enquiry-close" aria-label="Close enquiry"><X size={21} /></Dialog.Close>
+                <img src={lightLogo} alt="Nucho Solar Green Energy" className="enquiry-brand-logo enquiry-brand-logo-light" />
+                <span className="enquiry-step-number">{confirmation ? "Complete" : intent ? String(stepIndex + 1) + " of " + path.length : "Start"}</span>
+              </div>
+              <div className="enquiry-progress" role="progressbar" aria-label="Enquiry progress" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
+                <span style={{ width: String(progress) + "%" }} />
+              </div>
+              <div className="enquiry-stage" key={confirmation ? "complete" : intent + "-" + stepIndex}>
+                {confirmation ? <><Dialog.Title className="sr-only">Enquiry sent</Dialog.Title><Dialog.Description className="sr-only">Your enquiry was sent.</Dialog.Description><InquirySuccess name={confirmation.name} phone={confirmation.phone} /></> : (
+                  <div className="enquiry-question">
+                    {kicker && <p className="enquiry-kicker">{kicker}</p>}
+                    <Dialog.Title className="enquiry-title">{heading}</Dialog.Title>
+                    <Dialog.Description className="enquiry-hint">{hint}</Dialog.Description>
 
-                        {step === "intent" && (
-                          <div className="enquiry-options enquiry-intent-list">
-                            <GoalChoices onChoose={chooseIntent} />
-                          </div>
-                        )}
-
-                        {step === "property" && (
-                          <div className="enquiry-options">
-                            <Choice icon={Home} title="At home" detail="Lights, fridge, TV, Wi-Fi" selected={useCase === "home"} onClick={() => { if (useCase !== "home") setItems([]); setUseCase("home"); setStepIndex(2); }} />
-                            <Choice icon={Building2} title="At my business" detail="Computers, printers, CCTV, POS" selected={useCase === "office"} onClick={() => { if (useCase !== "office") setItems([]); setUseCase("office"); setStepIndex(2); }} />
-                            <Choice icon={Sprout} title="On a farm" detail="Pumps, fences, cold rooms" selected={useCase === "farm"} onClick={() => { if (useCase !== "farm") setItems([]); setUseCase("farm"); setStepIndex(2); }} />
-                          </div>
-                        )}
-
-                        {step === "serviceType" && (
-                          <div className="enquiry-options">
-                            <Choice icon={Wrench} title="Repair or troubleshoot" detail="Something is not working" selected={serviceType === "repair"} onClick={() => { setServiceType("repair"); setStepIndex(2); }} />
-                            <Choice icon={Sun} title="Maintenance" detail="Check or service an existing system" selected={serviceType === "maintenance"} onClick={() => { setServiceType("maintenance"); setStepIndex(2); }} />
-                            <Choice icon={BatteryCharging} title="Upgrade or expand" detail="Add capacity or replace components" selected={serviceType === "upgrade"} onClick={() => { setServiceType("upgrade"); setStepIndex(2); }} />
-                            <Choice icon={ArrowRight} title="Remove and reinstall" detail="Move a system to another site" selected={serviceType === "reinstallation"} onClick={() => { setServiceType("reinstallation"); setStepIndex(2); }} />
-                          </div>
-                        )}
-
-                        {step === "surveyFor" && (
-                          <div className="enquiry-options">
-                            <Choice icon={Sun} title="A new installation" detail="We look at your site for a new solar system" selected={surveyFor === "new"} onClick={() => { setSurveyFor("new"); setStepIndex(2); }} />
-                            <Choice icon={BatteryCharging} title="An existing system" detail="We check whether it can be upgraded" selected={surveyFor === "upgrade"} onClick={() => { setSurveyFor("upgrade"); setStepIndex(2); }} />
-                            <Choice icon={Building2} title="A business or farm project" detail="A larger business or farm site" selected={surveyFor === "project"} onClick={() => { setSurveyFor("project"); setStepIndex(2); }} />
-                            <Choice icon={MapPinned} title="I am not sure yet" detail="We help you work out what you need" selected={surveyFor === "unknown"} onClick={() => { setSurveyFor("unknown"); setStepIndex(2); }} />
-                          </div>
-                        )}
-
-                        {step === "items" && (
-                          <div className="enquiry-items">
-                            <label className="sr-only" htmlFor="enquiry-item-search">{intent === "system" ? "Search devices you use" : "Search solar equipment"}</label>
-                            <div className="enquiry-search-wrap">
-                              <Search size={20} aria-hidden="true" />
-                              <input
-                                ref={searchRef} id="enquiry-item-search" type="text" autoComplete="off"
-                                role="combobox" aria-autocomplete="list" aria-controls="enquiry-suggestions"
-                                aria-expanded={popupOpen} aria-activedescendant={activeSuggestion >= 0 && popupOpen ? "enquiry-suggestion-" + activeSuggestion : undefined}
-                                placeholder={intent === "system" ? "Search fridge, lights, water pump…" : "Search battery, panel, inverter…"}
-                                value={query}
-                                onChange={(event) => { setQuery(event.target.value); setShowSuggestions(true); setActiveSuggestion(-1); clearError("items"); }}
-                                onFocus={() => setShowSuggestions(true)}
-                                onBlur={() => setShowSuggestions(false)}
-                                onKeyDown={onSearchKeyDown}
-                              />
-                              {popupOpen && (
-                                <div id="enquiry-suggestions" className="enquiry-suggestions" role="listbox">
-                                  {suggestionNames.map((name, index) => (
-                                    <button
-                                      key={name} id={"enquiry-suggestion-" + index} type="button" role="option"
-                                      aria-selected={activeSuggestion === index}
-                                      onMouseDown={(event) => event.preventDefault()}
-                                      onClick={() => addItem(name, true)}
-                                    >
-                                      <span>{customSuggestion && index === suggestionNames.length - 1 ? "Add “" + name + "”" : name}</span>
-                                      <small>{customSuggestion && index === suggestionNames.length - 1 ? "Your own item" : "Suggested"}</small>
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                            <p className="enquiry-quick-label">Quick picks</p>
-                            <div className="enquiry-quick-picks">
-                              {catalog.slice(0, 5).filter((item) => !items.includes(item.name)).map((item) => (
-                                <button key={item.name} type="button" onClick={() => addItem(item.name)}>+ {item.name}</button>
-                              ))}
-                            </div>
-                            {items.length > 0 && (
-                              <div className="enquiry-selected" role="list" aria-label="Selected items">
-                                {items.map((item) => (
-                                  <span key={item} className="enquiry-selected-item" role="listitem">
-                                    {item}
-                                    <button type="button" aria-label={"Remove " + item} onClick={() => setItems((previous) => previous.filter((name) => name !== item))}><X size={15} /></button>
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                            {intent === "equipment" && (
-                              <label className="enquiry-install-toggle"><input type="checkbox" checked={installationHelp} onChange={(event) => setInstallationHelp(event.target.checked)} /> I also need installation help</label>
-                            )}
-                            {errors.items && <p role="alert" className="enquiry-field-error">{errors.items}</p>}
-                          </div>
-                        )}
-
-                        {step === "description" && (
-                          <div className="enquiry-field">
-                            <label htmlFor="enquiry-description">Your description</label>
-                            <textarea
-                              id="enquiry-description" rows={5} maxLength={500} value={explanation}
-                              placeholder={intent === "service" ? "e.g. The inverter has stopped charging the battery" : "e.g. I have frequent blackouts and need advice"}
-                              onChange={(event) => { setExplanation(event.target.value); clearError("explanation"); }}
-                              aria-invalid={Boolean(errors.explanation)}
-                              aria-describedby={errors.explanation ? "enquiry-description-error" : undefined}
-                            />
-                            {errors.explanation && <p id="enquiry-description-error" role="alert" className="enquiry-field-error">{errors.explanation}</p>}
-                          </div>
-                        )}
-
-                        {step === "contact" && (
-                          <>
-                            <form id="enquiry-contact-form" ref={contactFormRef} onSubmit={handleSubmit} autoComplete="on" noValidate className="enquiry-contact-form">
-                              {([
-                                ["name", "Full name", "text", "name", "Your full name"],
-                                ["phone", "Phone number", "tel", "tel", "e.g. 0712 345 678"],
-                                ["location", "Town or area", "text", "address-level2", "e.g. Karen, Nairobi"],
-                              ] as const).map(([field, label, type, autoComplete, placeholder]) => (
-                                <div className="enquiry-field" key={field}>
-                                  <label htmlFor={"enquiry-" + field}>{label}</label>
-                                  <input
-                                    id={"enquiry-" + field} name={field} type={type} autoComplete={autoComplete}
-                                    inputMode={field === "phone" ? "tel" : undefined}
-                                    placeholder={placeholder} defaultValue={contact[field]} required
-                                    maxLength={field === "phone" ? 30 : 100}
-                                    aria-invalid={Boolean(errors[field])}
-                                    aria-describedby={errors[field] ? "enquiry-" + field + "-error" : undefined}
-                                    onInput={(event) => {
-                                      // Read the value now: React clears currentTarget before a delayed update runs.
-                                      const value = event.currentTarget.value;
-                                      setContact((previous) => ({ ...previous, [field]: value }));
-                                      clearError(field);
-                                    }}
-                                  />
-                                  {errors[field] && <p id={"enquiry-" + field + "-error"} role="alert" className="enquiry-field-error">{errors[field]}</p>}
-                                </div>
-                              ))}
-                              <div style={honeypotStyle}>
-                                <input type="text" name="website" autoComplete="off" tabIndex={-1} aria-hidden="true" />
-                              </div>
-                            </form>
-                            <div className="enquiry-review"><b>{intentNames[intent as Intent]}: </b>{summary}</div>
-                            {submitFailed && (
-                              <p role="alert" className="enquiry-submit-error">
-                                We could not send your request. Please try again or call us on{" "}
-                                <a href={callHref(digits)}>{formatPhone(digits)}</a>.
-                              </p>
-                            )}
-                          </>
-                        )}
+                    {step === "intent" && (
+                      <div className="enquiry-options enquiry-intent-list">
+                        <GoalChoices onChoose={chooseIntent} />
                       </div>
                     )}
+
+                    {step === "property" && (
+                      <div className="enquiry-options">
+                        <Choice icon={Home} title="At home" detail="Lights, fridge, TV, Wi-Fi" selected={useCase === "home"} onClick={() => { if (useCase !== "home") setItems([]); setUseCase("home"); setStepIndex(2); }} />
+                        <Choice icon={Building2} title="At my business" detail="Computers, printers, CCTV, POS" selected={useCase === "office"} onClick={() => { if (useCase !== "office") setItems([]); setUseCase("office"); setStepIndex(2); }} />
+                        <Choice icon={Sprout} title="On a farm" detail="Pumps, fences, cold rooms" selected={useCase === "farm"} onClick={() => { if (useCase !== "farm") setItems([]); setUseCase("farm"); setStepIndex(2); }} />
+                      </div>
+                    )}
+
+                    {step === "serviceType" && (
+                      <div className="enquiry-options">
+                        <Choice icon={Wrench} title="Repair or troubleshoot" detail="Something is not working" selected={serviceType === "repair"} onClick={() => { setServiceType("repair"); setStepIndex(2); }} />
+                        <Choice icon={Sun} title="Maintenance" detail="Check or service an existing system" selected={serviceType === "maintenance"} onClick={() => { setServiceType("maintenance"); setStepIndex(2); }} />
+                        <Choice icon={BatteryCharging} title="Upgrade or expand" detail="Add capacity or replace components" selected={serviceType === "upgrade"} onClick={() => { setServiceType("upgrade"); setStepIndex(2); }} />
+                        <Choice icon={ArrowRight} title="Remove and reinstall" detail="Move a system to another site" selected={serviceType === "reinstallation"} onClick={() => { setServiceType("reinstallation"); setStepIndex(2); }} />
+                      </div>
+                    )}
+
+                    {step === "surveyFor" && (
+                      <div className="enquiry-options">
+                        <Choice icon={Sun} title="A new installation" detail="We look at your site for a new solar system" selected={surveyFor === "new"} onClick={() => { setSurveyFor("new"); setStepIndex(2); }} />
+                        <Choice icon={BatteryCharging} title="An existing system" detail="We check whether it can be upgraded" selected={surveyFor === "upgrade"} onClick={() => { setSurveyFor("upgrade"); setStepIndex(2); }} />
+                        <Choice icon={Building2} title="A business or farm project" detail="A larger business or farm site" selected={surveyFor === "project"} onClick={() => { setSurveyFor("project"); setStepIndex(2); }} />
+                        <Choice icon={MapPinned} title="I am not sure yet" detail="We help you work out what you need" selected={surveyFor === "unknown"} onClick={() => { setSurveyFor("unknown"); setStepIndex(2); }} />
+                      </div>
+                    )}
+
+                    {step === "items" && (
+                      <div className="enquiry-items">
+                        <label className="sr-only" htmlFor="enquiry-item-search">{intent === "system" ? "Search devices you use" : "Search solar equipment"}</label>
+                        <div className="enquiry-search-wrap">
+                          <Search size={20} aria-hidden="true" />
+                          <input
+                            ref={searchRef} id="enquiry-item-search" type="text" autoComplete="off"
+                            role="combobox" aria-autocomplete="list" aria-controls="enquiry-suggestions"
+                            aria-expanded={popupOpen} aria-activedescendant={activeSuggestion >= 0 && popupOpen ? "enquiry-suggestion-" + activeSuggestion : undefined}
+                            placeholder={intent === "system" ? "Search fridge, lights, water pump…" : "Search battery, panel, inverter…"}
+                            value={query}
+                            onChange={(event) => { setQuery(event.target.value); setShowSuggestions(true); setActiveSuggestion(-1); clearError("items"); }}
+                            onFocus={() => setShowSuggestions(true)}
+                            onBlur={() => setShowSuggestions(false)}
+                            onKeyDown={onSearchKeyDown}
+                          />
+                          {popupOpen && (
+                            <div id="enquiry-suggestions" className="enquiry-suggestions" role="listbox">
+                              {suggestionNames.map((name, index) => (
+                                <button
+                                  key={name} id={"enquiry-suggestion-" + index} type="button" role="option"
+                                  aria-selected={activeSuggestion === index}
+                                  onMouseDown={(event) => event.preventDefault()}
+                                  onClick={() => addItem(name, true)}
+                                >
+                                  <span>{customSuggestion && index === suggestionNames.length - 1 ? "Add “" + name + "”" : name}</span>
+                                  <small>{customSuggestion && index === suggestionNames.length - 1 ? "Your own item" : "Suggested"}</small>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <p className="enquiry-quick-label">Quick picks</p>
+                        <div className="enquiry-quick-picks">
+                          {catalog.slice(0, 5).filter((item) => !items.includes(item.name)).map((item) => (
+                            <button key={item.name} type="button" onClick={() => addItem(item.name)}>+ {item.name}</button>
+                          ))}
+                        </div>
+                        {items.length > 0 && (
+                          <div className="enquiry-selected" role="list" aria-label="Selected items">
+                            {items.map((item) => (
+                              <span key={item} className="enquiry-selected-item" role="listitem">
+                                {item}
+                                <button type="button" aria-label={"Remove " + item} onClick={() => setItems((previous) => previous.filter((name) => name !== item))}><X size={15} /></button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {intent === "equipment" && (
+                          <label className="enquiry-install-toggle"><input type="checkbox" checked={installationHelp} onChange={(event) => setInstallationHelp(event.target.checked)} /> I also need installation help</label>
+                        )}
+                        {errors.items && <p role="alert" className="enquiry-field-error">{errors.items}</p>}
+                      </div>
+                    )}
+
+                    {step === "description" && (
+                      <div className="enquiry-field">
+                        <label htmlFor="enquiry-description">Your description</label>
+                        <textarea
+                          id="enquiry-description" rows={5} maxLength={500} value={explanation}
+                          placeholder={intent === "service" ? "e.g. The inverter has stopped charging the battery" : "e.g. I have frequent blackouts and need advice"}
+                          onChange={(event) => { setExplanation(event.target.value); clearError("explanation"); }}
+                          aria-invalid={Boolean(errors.explanation)}
+                          aria-describedby={errors.explanation ? "enquiry-description-error" : undefined}
+                        />
+                        {errors.explanation && <p id="enquiry-description-error" role="alert" className="enquiry-field-error">{errors.explanation}</p>}
+                      </div>
+                    )}
+
+                    {step === "contact" && (
+                      <>
+                        <form id="enquiry-contact-form" ref={contactFormRef} onSubmit={handleSubmit} autoComplete="on" noValidate className="enquiry-contact-form">
+                          {([
+                            ["name", "Full name", "text", "name", "Your full name"],
+                            ["phone", "Phone number", "tel", "tel", "e.g. 0712 345 678"],
+                            ["location", "Town or area", "text", "address-level2", "e.g. Karen, Nairobi"],
+                          ] as const).map(([field, label, type, autoComplete, placeholder]) => (
+                            <div className="enquiry-field" key={field}>
+                              <label htmlFor={"enquiry-" + field}>{label}</label>
+                              <input
+                                id={"enquiry-" + field} name={field} type={type} autoComplete={autoComplete}
+                                inputMode={field === "phone" ? "tel" : undefined}
+                                placeholder={placeholder} defaultValue={contact[field]} required
+                                maxLength={field === "phone" ? 30 : 100}
+                                aria-invalid={Boolean(errors[field])}
+                                aria-describedby={errors[field] ? "enquiry-" + field + "-error" : undefined}
+                                onInput={(event) => {
+                                  // Read the value now: React clears currentTarget before a delayed update runs.
+                                  const value = event.currentTarget.value;
+                                  setContact((previous) => ({ ...previous, [field]: value }));
+                                  clearError(field);
+                                }}
+                              />
+                              {errors[field] && <p id={"enquiry-" + field + "-error"} role="alert" className="enquiry-field-error">{errors[field]}</p>}
+                            </div>
+                          ))}
+                          <div style={honeypotStyle}>
+                            <input type="text" name="website" autoComplete="off" tabIndex={-1} aria-hidden="true" />
+                          </div>
+                        </form>
+                        <div className="enquiry-review"><b>{intentNames[intent as Intent]}: </b>{summary}</div>
+                        {submitFailed && (
+                          <p role="alert" className="enquiry-submit-error">
+                            We could not send your request. Please try again or call us on{" "}
+                            <a href={callHref(digits)}>{formatPhone(digits)}</a>.
+                          </p>
+                        )}
+                      </>
+                    )}
                   </div>
-                  {!confirmation && (
-                    <div className="enquiry-footer">
-                      {stepIndex > 0 ? <button type="button" className="enquiry-back" onClick={goBack}><ArrowLeft size={17} /> Back</button> : <span />}
-                      {step === "items" && <span className="enquiry-next-hint">{items.length} item{items.length === 1 ? "" : "s"} added</span>}
-                      {(step === "items" || step === "description") && <button type="button" className="enquiry-primary" onClick={continueStep}>Continue <ArrowRight size={18} /></button>}
-                      {step === "contact" && <button type="submit" form="enquiry-contact-form" className="enquiry-primary" disabled={submitting}>{submitting ? "Sending…" : "Get my free quote"} {!submitting && <ArrowRight size={18} />}</button>}
-                    </div>
-                  )}
+                )}
+              </div>
+              {!confirmation && (
+                <div className="enquiry-footer">
+                  {stepIndex > 0 ? <button type="button" className="enquiry-back" onClick={goBack}><ArrowLeft size={17} /> Back</button> : <span />}
+                  {step === "items" && <span className="enquiry-next-hint">{items.length} item{items.length === 1 ? "" : "s"} added</span>}
+                  {(step === "items" || step === "description") && <button type="button" className="enquiry-primary" onClick={continueStep}>Continue <ArrowRight size={18} /></button>}
+                  {step === "contact" && <button type="submit" form="enquiry-contact-form" className="enquiry-primary" disabled={submitting}>{submitting ? "Sending…" : "Get my free quote"} {!submitting && <ArrowRight size={18} />}</button>}
                 </div>
-              </Dialog.Content>
-            </Dialog.Portal>
+              )}
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
       </Dialog.Root>
     </div>
   );
