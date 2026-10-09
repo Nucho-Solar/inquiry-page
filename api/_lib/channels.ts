@@ -77,12 +77,16 @@ export async function sendEmail(lead: Lead, env: Env): Promise<ChannelResult> {
   const contentHash = createHash("sha256")
     .update(
       JSON.stringify([
+        lead.intent,
         lead.useCase,
         lead.name,
         lead.phone,
         lead.location,
         lead.budget,
         lead.services,
+        lead.serviceType,
+        lead.surveyFor,
+        lead.installationHelp,
         lead.explanation,
       ]),
     )

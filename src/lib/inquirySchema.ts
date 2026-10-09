@@ -1,6 +1,9 @@
 import { z } from "zod";
 
 export const useCases = ["home", "office", "farm"] as const;
+export const inquiryIntents = ["system", "equipment", "service", "survey", "unsure"] as const;
+export const serviceTypes = ["repair", "maintenance", "upgrade", "reinstallation"] as const;
+export const surveyPurposes = ["new", "upgrade", "project", "unknown"] as const;
 
 export const budgetOptions = [
   "Below KSh 50,000",
@@ -37,9 +40,14 @@ export const attributionSchema = z.object({
   utm_campaign: z.string().max(200).optional(),
 });
 
-export const inquiryFormSchema = z.object({
-  useCase: z.enum(useCases),
-  services: z.array(z.string().trim().min(1).max(50)).min(1).max(20),
+const inquiryFields = z.object({
+  // A default keeps an already-open copy of the previous form valid during a deployment.
+  intent: z.enum(inquiryIntents).default("system"),
+  useCase: z.enum(useCases).optional(),
+  services: z.array(z.string().trim().min(1).max(50)).max(20).default([]),
+  serviceType: z.enum(serviceTypes).optional(),
+  surveyFor: z.enum(surveyPurposes).optional(),
+  installationHelp: z.boolean().default(false),
   name: z.string().trim().min(1).max(100),
   phone: z.string().transform((value, ctx) => {
     const normalized = normalizePhone(value);
@@ -53,15 +61,31 @@ export const inquiryFormSchema = z.object({
     return normalized;
   }),
   location: z.string().trim().min(1).max(100),
-  budget: z.enum(budgetOptions),
+  // Older form submissions include a budget; the shorter enquiry does not ask for one.
+  budget: z.enum(budgetOptions).optional(),
   explanation: z.string().max(500).default(""),
 });
 
-export const inquiryPayloadSchema = inquiryFormSchema.extend({
+function validateInquiry(value: z.infer<typeof inquiryFields>, ctx: z.RefinementCtx) {
+  const add = (path: string, message: string) => ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message });
+  if (value.intent === "system" && !value.useCase) add("useCase", "Select where the system will be used");
+  if ((value.intent === "system" || value.intent === "equipment") && value.services.length === 0) {
+    add("services", "Add at least one item");
+  }
+  if (value.intent === "service" && !value.serviceType) add("serviceType", "Select the work needed");
+  if (value.intent === "survey" && !value.surveyFor) add("surveyFor", "Select what needs assessing");
+  if ((value.intent === "service" || value.intent === "unsure") && value.explanation.trim().length < 5) {
+    add("explanation", "Add a short description");
+  }
+}
+
+export const inquiryFormSchema = inquiryFields.superRefine(validateInquiry);
+
+export const inquiryPayloadSchema = inquiryFields.extend({
   submissionId: z.string().uuid(),
   website: z.string().max(200).default(""),
   fillMs: z.number().int().min(0),
   attribution: attributionSchema.default({}),
-});
+}).superRefine(validateInquiry);
 
 export type InquiryPayload = z.infer<typeof inquiryPayloadSchema>;

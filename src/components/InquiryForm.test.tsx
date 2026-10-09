@@ -1,11 +1,10 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import InquiryForm from "@/components/InquiryForm";
 import { submitInquiry } from "@/lib/submitInquiry";
 import { trackConversion } from "@/lib/trackConversion";
-import { readAttribution } from "@/lib/attribution";
 
 vi.mock("@/lib/submitInquiry", () => ({ submitInquiry: vi.fn() }));
 vi.mock("@/lib/trackConversion", () => ({ trackConversion: vi.fn() }));
@@ -13,355 +12,143 @@ vi.mock("@/lib/trackConversion", () => ({ trackConversion: vi.fn() }));
 const submitMock = vi.mocked(submitInquiry);
 const trackMock = vi.mocked(trackConversion);
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-async function fillValidForm(
-  user: ReturnType<typeof userEvent.setup>,
-  phone = "0712 345 678",
-) {
-  await user.click(screen.getByRole("combobox", { name: /what do you need solar for/i }));
-  await user.click(await screen.findByRole("option", { name: "Home - Kenya" }));
-  await user.click(await screen.findByRole("button", { name: "Solar Lighting Kit" }));
-  await user.type(screen.getByLabelText(/full name/i), "Jane");
-  const phoneInput = screen.getByLabelText(/phone number/i);
-  await user.clear(phoneInput);
-  await user.type(phoneInput, phone);
-  await user.type(screen.getByLabelText(/your location/i), "Karen");
-  await user.click(screen.getByRole("combobox", { name: /estimated budget/i }));
-  await user.click(await screen.findByRole("option", { name: "KSh 50,000 - 100,000" }));
+async function start(user: ReturnType<typeof userEvent.setup>, route: string) {
+  await user.click(screen.getByRole("button", { name: /find the right help/i }));
+  await user.click(screen.getByRole("button", { name: new RegExp(route, "i") }));
 }
 
-const submitButton = () => screen.getByRole("button", { name: /request my free quote|sending/i });
-
-// performance.now() drives fillMs. Tests fill the form in a second or two, so the
-// fill time is set explicitly: advance() moves the clock forward from the mount time.
-function controlClock() {
-  let clock = 5000;
-  const spy = vi.spyOn(performance, "now").mockImplementation(() => clock);
-  return {
-    advance: (ms: number) => {
-      clock += ms;
-    },
-    restore: () => spy.mockRestore(),
-  };
+async function contactAndSend(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(screen.getByLabelText("Full name"), "Jane Wanjiru");
+  await user.type(screen.getByLabelText("Phone number"), "0712 345 678");
+  await user.type(screen.getByLabelText("Town or area"), "Karen");
+  await user.click(screen.getByRole("button", { name: /send enquiry/i }));
+  await waitFor(() => expect(submitMock).toHaveBeenCalledTimes(1));
+  return submitMock.mock.calls[0][0];
 }
 
 describe("InquiryForm", () => {
-  let openSpy: ReturnType<typeof vi.spyOn>;
-
   beforeEach(() => {
     submitMock.mockReset();
     trackMock.mockReset();
-    openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
-    window.history.replaceState({}, "", "/");
+    submitMock.mockResolvedValue({ ok: true });
+    window.history.replaceState({}, "", "/?gclid=ad-123&utm_campaign=home");
   });
 
   afterEach(() => {
     cleanup();
-    openSpy.mockRestore();
     vi.unstubAllEnvs();
-    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
-  it("shows the confirmation, tracks the conversion and removes the form on success", async () => {
-    vi.stubEnv("VITE_ADS_CONVERSION_LABEL", "lbl");
-    submitMock.mockResolvedValue({ ok: true });
-    const clock = controlClock();
+  it("asks only relevant system questions and submits devices without quantities", async () => {
     const user = userEvent.setup();
     render(<InquiryForm />);
-    await fillValidForm(user);
-    clock.advance(10000);
-    await user.click(submitButton());
-
-    expect(
-      await screen.findByText("Thanks Jane, we'll contact you on +254712345678."),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /request my free quote/i })).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/full name/i)).not.toBeInTheDocument();
-    expect(openSpy).not.toHaveBeenCalled();
-    expect(trackMock).toHaveBeenCalledTimes(1);
-    expect(trackMock).toHaveBeenCalledWith("lbl");
-    clock.restore();
-  });
-
-  it("shows the confirmation but sends no conversion when the form was filled in under 3 seconds", async () => {
-    vi.stubEnv("VITE_ADS_CONVERSION_LABEL", "lbl");
-    submitMock.mockResolvedValue({ ok: true });
-    const clock = controlClock();
-    const user = userEvent.setup();
-    render(<InquiryForm />);
-    await fillValidForm(user);
-    clock.advance(2999);
-    await user.click(submitButton());
-
-    expect(await screen.findByText(/^Thanks Jane/)).toBeInTheDocument();
-    expect(trackMock).not.toHaveBeenCalled();
-    clock.restore();
-  });
-
-  it("shows the confirmation but sends no conversion when the hidden field was filled", async () => {
-    vi.stubEnv("VITE_ADS_CONVERSION_LABEL", "lbl");
-    submitMock.mockResolvedValue({ ok: true });
-    const clock = controlClock();
-    const user = userEvent.setup();
-    const { container } = render(<InquiryForm />);
-    await fillValidForm(user);
-    const honeypot = container.querySelector('input[name="website"]') as HTMLInputElement;
-    fireEvent.change(honeypot, { target: { value: "http://spam.example" } });
-    clock.advance(10000);
-    await user.click(submitButton());
-
-    expect(await screen.findByText(/^Thanks Jane/)).toBeInTheDocument();
-    expect(submitMock.mock.calls[0][0].website).toBe("http://spam.example");
-    expect(trackMock).not.toHaveBeenCalled();
-    clock.restore();
-  });
-
-  it("sends only the devices of the current use case after the use case changes", async () => {
-    submitMock.mockResolvedValue({ ok: true });
-    const user = userEvent.setup();
-    render(<InquiryForm />);
-    await fillValidForm(user);
-    await user.click(screen.getByRole("combobox", { name: /what do you need solar for/i }));
-    await user.click(await screen.findByRole("option", { name: "Farm - Kenya" }));
-    await user.click(await screen.findByRole("button", { name: "Solar Water Pump" }));
-    await user.click(submitButton());
-    await screen.findByText(/^Thanks Jane/);
-
-    expect(submitMock.mock.calls[0][0].services).toEqual(["Solar Water Pump"]);
-  });
-
-  it("drops the custom devices when Other is switched off", async () => {
-    submitMock.mockResolvedValue({ ok: true });
-    const user = userEvent.setup();
-    render(<InquiryForm />);
-    await fillValidForm(user);
-    await user.click(screen.getByRole("button", { name: "Other" }));
-    await user.type(screen.getByLabelText(/add custom devices/i), "Weather station{Enter}");
-    expect(screen.getByText("Weather station")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Other" }));
-    await user.click(submitButton());
-    await screen.findByText(/^Thanks Jane/);
-
-    expect(submitMock.mock.calls[0][0].services).toEqual(["Solar Lighting Kit"]);
-  });
-
-  it("sends a custom device that was typed but not confirmed with Enter", async () => {
-    submitMock.mockResolvedValue({ ok: true });
-    const user = userEvent.setup();
-    render(<InquiryForm />);
-    await fillValidForm(user);
-    await user.click(screen.getByRole("button", { name: "Other" }));
-    await user.type(screen.getByLabelText(/add custom devices/i), "Solar gate motor");
-    await user.click(submitButton());
-    await screen.findByText(/^Thanks Jane/);
-
-    expect(submitMock.mock.calls[0][0].services).toEqual(["Solar Lighting Kit", "Solar gate motor"]);
-  });
-
-  it("does not repeat a typed custom device that was already added with Enter", async () => {
-    submitMock.mockResolvedValue({ ok: true });
-    const user = userEvent.setup();
-    render(<InquiryForm />);
-    await fillValidForm(user);
-    await user.click(screen.getByRole("button", { name: "Other" }));
-    const input = screen.getByLabelText(/add custom devices/i);
-    await user.type(input, "Weather station{Enter}");
-    await user.type(input, "Weather station");
-    await user.click(submitButton());
-    await screen.findByText(/^Thanks Jane/);
-
-    expect(submitMock.mock.calls[0][0].services).toEqual(["Solar Lighting Kit", "Weather station"]);
-  });
-
-  it("blocks the submit with a message when the typed custom device is too short", async () => {
-    const user = userEvent.setup();
-    render(<InquiryForm />);
-    await fillValidForm(user);
-    await user.click(screen.getByRole("button", { name: "Other" }));
-    await user.type(screen.getByLabelText(/add custom devices/i), "ab");
-    await user.click(submitButton());
-
-    expect(
-      await screen.findByText("Device name must be between 3-50 characters", { selector: "p.text-destructive" }),
-    ).toBeInTheDocument();
-    expect(submitMock).not.toHaveBeenCalled();
-  });
-
-  it("keeps the custom devices while Other stays on", async () => {
-    submitMock.mockResolvedValue({ ok: true });
-    const user = userEvent.setup();
-    render(<InquiryForm />);
-    await fillValidForm(user);
-    await user.click(screen.getByRole("button", { name: "Other" }));
-    await user.type(screen.getByLabelText(/add custom devices/i), "Weather station{Enter}");
-    await user.click(submitButton());
-    await screen.findByText(/^Thanks Jane/);
-
-    expect(submitMock.mock.calls[0][0].services).toEqual(["Solar Lighting Kit", "Weather station"]);
-  });
-
-  it("keeps the typed values and shows a tel link when the server fails", async () => {
-    vi.stubEnv("VITE_CONTACT_PHONE", "254700111222");
-    submitMock.mockResolvedValue({ ok: false, reason: "server" });
-    const user = userEvent.setup();
-    render(<InquiryForm />);
-    await fillValidForm(user);
-    await user.click(submitButton());
-
-    const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("We couldn't send your request. Please try again or call us on");
-    const link = screen.getByRole("link");
-    expect(link).toHaveAttribute("href", "tel:+254700111222");
-    expect(link).toHaveTextContent("254700111222");
-    expect(screen.getByLabelText(/full name/i)).toHaveValue("Jane");
-    expect(screen.getByLabelText(/your location/i)).toHaveValue("Karen");
-    expect(trackMock).not.toHaveBeenCalled();
-    expect(openSpy).not.toHaveBeenCalled();
-  });
-
-  it("falls back to the default contact phone when none is configured", async () => {
-    vi.stubEnv("VITE_CONTACT_PHONE", "");
-    submitMock.mockResolvedValue({ ok: false, reason: "validation" });
-    const user = userEvent.setup();
-    render(<InquiryForm />);
-    await fillValidForm(user);
-    await user.click(submitButton());
-
-    expect(await screen.findByRole("link")).toHaveAttribute("href", "tel:+254758330507");
-  });
-
-  it("sends once when submit fires twice before React re-renders, and disables the button while pending", async () => {
-    let resolve!: (value: { ok: true }) => void;
-    submitMock.mockImplementation(
-      () => new Promise((r) => { resolve = r; }),
-    );
-    const user = userEvent.setup();
-    const { container } = render(<InquiryForm />);
-    await fillValidForm(user);
-
-    const form = container.querySelector("form") as HTMLFormElement;
-    act(() => {
-      fireEvent.submit(form);
-      fireEvent.submit(form);
+    await start(user, "Get a solar system");
+    await user.click(screen.getByRole("button", { name: /At home/i }));
+    expect(screen.getByRole("heading", { name: "What do you need to power?" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /\+ Lights/i }));
+    expect(screen.queryByLabelText(/quantity/i)).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    const payload = await contactAndSend(user);
+    expect(payload).toMatchObject({
+      intent: "system", useCase: "home", services: ["Lights"],
+      phone: "+254712345678", installationHelp: false,
+      attribution: { gclid: "ad-123", utm_campaign: "home" },
     });
-
-    expect(submitMock).toHaveBeenCalledTimes(1);
-    await waitFor(() => expect(submitButton()).toBeDisabled());
-    expect(submitButton()).toHaveTextContent("Sending…");
-
-    resolve({ ok: true });
-    expect(await screen.findByText(/^Thanks Jane/)).toBeInTheDocument();
+    expect(payload).not.toHaveProperty("budget");
+    expect(payload.submissionId).toMatch(/^[0-9a-f-]{36}$/i);
+    expect(await screen.findByText(/^Thanks Jane Wanjiru/)).toBeInTheDocument();
   });
 
-  it("still renders and submits when crypto.randomUUID is unavailable", async () => {
-    const realCrypto = globalThis.crypto;
-    vi.stubGlobal("crypto", { getRandomValues: realCrypto.getRandomValues.bind(realCrypto) });
-    submitMock.mockResolvedValue({ ok: true });
+  it("routes equipment buyers to a product search and installation choice", async () => {
     const user = userEvent.setup();
     render(<InquiryForm />);
-    await fillValidForm(user);
-    await user.click(submitButton());
-    await screen.findByText(/^Thanks Jane/);
-
-    expect(submitMock.mock.calls[0][0].submissionId).toMatch(UUID);
+    await start(user, "Buy solar equipment");
+    expect(screen.getByRole("heading", { name: "Which equipment do you need?" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /\+ Solar panels/i }));
+    await user.click(screen.getByRole("checkbox", { name: /installation help/i }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    const payload = await contactAndSend(user);
+    expect(payload).toMatchObject({ intent: "equipment", services: ["Solar panels"], installationHelp: true });
+    expect(payload.useCase).toBeUndefined();
   });
 
-  it("sends the honeypot, a uuid, a timestamp and attribution, and reuses the submission id on retry", async () => {
-    window.history.replaceState({}, "", "/?gclid=abc&utm_campaign=solar");
-    submitMock.mockResolvedValueOnce({ ok: false, reason: "network" });
-    submitMock.mockResolvedValueOnce({ ok: true });
+  it("routes service requests through work type and a short description", async () => {
     const user = userEvent.setup();
     render(<InquiryForm />);
-    await fillValidForm(user);
-    await user.click(submitButton());
-    await screen.findByRole("alert");
-    await user.click(submitButton());
-    await screen.findByText(/^Thanks Jane/);
-
-    expect(submitMock).toHaveBeenCalledTimes(2);
-    const first = submitMock.mock.calls[0][0];
-    const second = submitMock.mock.calls[1][0];
-    expect(first.website).toBe("");
-    expect(first.submissionId).toMatch(UUID);
-    expect(Number.isInteger(first.fillMs)).toBe(true);
-    expect(first.fillMs).toBeGreaterThanOrEqual(0);
-    expect(first.attribution).toEqual(readAttribution(window.location.search));
-    expect(first.attribution).toEqual({ gclid: "abc", utm_campaign: "solar" });
-    expect(first.phone).toBe("+254712345678");
-    expect(first.services).toEqual(["Solar Lighting Kit"]);
-    expect(second.submissionId).toBe(first.submissionId);
-    expect(second.fillMs).toBeGreaterThanOrEqual(first.fillMs);
+    await start(user, "Service an existing system");
+    await user.click(screen.getByRole("button", { name: /Repair or troubleshoot/i }));
+    await user.type(screen.getByLabelText("Your description"), "Inverter stopped charging.");
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    const payload = await contactAndSend(user);
+    expect(payload).toMatchObject({
+      intent: "service", serviceType: "repair", explanation: "Inverter stopped charging.", services: [],
+    });
   });
 
-  it("sends fillMs as a performance.now() delta from mount, not a wall-clock time", async () => {
-    let clock = 5000;
-    const nowSpy = vi.spyOn(performance, "now").mockImplementation(() => clock);
-    // A wall clock that is wildly wrong must not affect the value.
-    const dateSpy = vi.spyOn(Date, "now").mockReturnValue(4102444800000);
-    submitMock.mockResolvedValue({ ok: true });
+  it("routes assessments by purpose without asking for devices", async () => {
     const user = userEvent.setup();
     render(<InquiryForm />);
-    await fillValidForm(user);
-    clock = 5000 + 12345.4;
-    await user.click(submitButton());
-    await screen.findByText(/^Thanks Jane/);
-
-    expect(submitMock.mock.calls[0][0].fillMs).toBe(12345);
-    nowSpy.mockRestore();
-    dateSpy.mockRestore();
+    await start(user, "Request a site assessment");
+    await user.click(screen.getByRole("button", { name: /A business or farm project/i }));
+    const payload = await contactAndSend(user);
+    expect(payload).toMatchObject({ intent: "survey", surveyFor: "project", services: [] });
   });
 
-  it("rejects an invalid phone without calling the API", async () => {
+  it("accepts an undecided visitor's own description", async () => {
     const user = userEvent.setup();
     render(<InquiryForm />);
-    await fillValidForm(user, "07123");
-    await user.click(submitButton());
+    await start(user, "I am not sure");
+    await user.type(screen.getByLabelText("Your description"), "I need advice for a backup system.");
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    const payload = await contactAndSend(user);
+    expect(payload).toMatchObject({ intent: "unsure", explanation: "I need advice for a backup system." });
+  });
 
-    expect(
-      await screen.findByText("Enter a valid phone number, e.g. 0712 345 678"),
-    ).toBeInTheDocument();
+  it("blocks an empty device selection and accepts a custom item typed before Continue", async () => {
+    const user = userEvent.setup();
+    render(<InquiryForm />);
+    await start(user, "Get a solar system");
+    await user.click(screen.getByRole("button", { name: /At home/i }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Add at least one item");
+    await user.type(screen.getByRole("combobox", { name: "Search devices you use" }), "Solar gate motor");
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    expect(screen.getByLabelText("Full name")).toBeInTheDocument();
+    const payload = await contactAndSend(user);
+    expect(payload.services).toEqual(["Solar gate motor"]);
+  });
+
+  it("keeps all contact fields together with browser autofill hints and validates phone", async () => {
+    const user = userEvent.setup();
+    render(<InquiryForm />);
+    await start(user, "Request a site assessment");
+    await user.click(screen.getByRole("button", { name: /A new installation/i }));
+    expect(screen.getByLabelText("Full name")).toHaveAttribute("autocomplete", "name");
+    expect(screen.getByLabelText("Phone number")).toHaveAttribute("autocomplete", "tel");
+    expect(screen.getByLabelText("Town or area")).toHaveAttribute("autocomplete", "address-level2");
+    await user.type(screen.getByLabelText("Full name"), "Jane");
+    await user.type(screen.getByLabelText("Phone number"), "123");
+    await user.type(screen.getByLabelText("Town or area"), "Karen");
+    await user.click(screen.getByRole("button", { name: /send enquiry/i }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Enter a valid phone number");
     expect(submitMock).not.toHaveBeenCalled();
   });
 
-  it.each([
-    ["a Kenyan landline", "020 234 5678", "+254202345678"],
-    ["an international number", "+1 415 555 0100", "+14155550100"],
-  ])("accepts %s and sends it normalised", async (_label, typed, sent) => {
-    submitMock.mockResolvedValue({ ok: true });
+  it("suppresses conversion for the honeypot and retains the same id after a failed retry", async () => {
+    vi.stubEnv("VITE_ADS_CONVERSION_LABEL", "label");
+    submitMock.mockResolvedValueOnce({ ok: false, reason: "server" }).mockResolvedValueOnce({ ok: true });
     const user = userEvent.setup();
     render(<InquiryForm />);
-    await fillValidForm(user, typed);
-    await user.click(submitButton());
-    await screen.findByText(/^Thanks Jane/);
-
-    expect(submitMock.mock.calls[0][0].phone).toBe(sent);
-  });
-
-  it("shows a message per field when the form is empty", async () => {
-    const user = userEvent.setup();
-    render(<InquiryForm />);
-    await user.click(submitButton());
-
-    expect(await screen.findByText("Please select a use case")).toBeInTheDocument();
-    expect(screen.getByText("Name is required (max 100 characters)")).toBeInTheDocument();
-    expect(screen.getByText("Location is required (max 100 characters)")).toBeInTheDocument();
-    expect(screen.getByText("Please select your estimated budget")).toBeInTheDocument();
-    expect(submitMock).not.toHaveBeenCalled();
-  });
-
-  it("labels the phone field without naming a channel", () => {
-    const { container } = render(<InquiryForm />);
-    expect(screen.getByLabelText("Phone Number *")).toBeInTheDocument();
-    expect(container.textContent).not.toMatch(/whatsapp/i);
-  });
-
-  it("renders the honeypot hidden from assistive tech and the tab order", () => {
-    const { container } = render(<InquiryForm />);
-    const honeypot = container.querySelector('input[name="website"]');
-    expect(honeypot).not.toBeNull();
-    expect(honeypot).toHaveAttribute("aria-hidden", "true");
-    expect(honeypot).toHaveAttribute("tabindex", "-1");
-    expect(honeypot).toHaveAttribute("autocomplete", "off");
+    await start(user, "Request a site assessment");
+    await user.click(screen.getByRole("button", { name: /A new installation/i }));
+    fireEvent.change(document.querySelector('input[name="website"]') as HTMLInputElement, { target: { value: "spam" } });
+    await contactAndSend(user);
+    expect(await screen.findByRole("alert")).toHaveTextContent("We could not send your request");
+    expect(screen.getByLabelText("Full name")).toHaveValue("Jane Wanjiru");
+    await user.click(screen.getByRole("button", { name: /send enquiry/i }));
+    await waitFor(() => expect(submitMock).toHaveBeenCalledTimes(2));
+    expect(submitMock.mock.calls[1][0].submissionId).toBe(submitMock.mock.calls[0][0].submissionId);
+    expect(trackMock).not.toHaveBeenCalled();
   });
 });

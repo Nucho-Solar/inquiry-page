@@ -71,14 +71,14 @@ describe("isUuid", () => {
   it("accepts what the payload schema accepts as a submissionId", () => {
     const id = "3f1c2b8e-5a4d-4c6e-9b7a-1d2e3f4a5b6c";
     expect(isUuid(id)).toBe(true);
-    expect(inquiryPayloadSchema.shape.submissionId.safeParse(id).success).toBe(true);
+    expect(inquiryPayloadSchema.safeParse({ ...validPayload, submissionId: id }).success).toBe(true);
   });
 
   it.each(["", "not-a-uuid", "3f1c2b8e5a4d4c6e9b7a1d2e3f4a5b6c", 42, null, undefined, ["x"]])(
     "rejects %j like the schema does",
     (value) => {
       expect(isUuid(value)).toBe(false);
-      expect(inquiryPayloadSchema.shape.submissionId.safeParse(value).success).toBe(false);
+      expect(inquiryPayloadSchema.safeParse({ ...validPayload, submissionId: value }).success).toBe(false);
     },
   );
 });
@@ -98,6 +98,31 @@ const validPayload = {
 };
 
 describe("inquiryPayloadSchema", () => {
+  it("keeps an in-flight previous form valid after deployment", () => {
+    const result = inquiryPayloadSchema.safeParse(validPayload);
+    expect(result.success && result.data.intent).toBe("system");
+  });
+
+  it.each([
+    ["system without setting", { intent: "system", useCase: undefined }],
+    ["equipment without products", { intent: "equipment", services: [] }],
+    ["service without work type", { intent: "service", services: [], useCase: undefined, serviceType: undefined, explanation: "Inverter fault" }],
+    ["service without description", { intent: "service", services: [], useCase: undefined, serviceType: "repair", explanation: "" }],
+    ["survey without purpose", { intent: "survey", services: [], useCase: undefined, surveyFor: undefined }],
+    ["undecided without description", { intent: "unsure", services: [], useCase: undefined, explanation: "" }],
+  ])("requires the route-specific answer for %s", (_label, override) => {
+    expect(inquiryPayloadSchema.safeParse({ ...validPayload, ...override }).success).toBe(false);
+  });
+
+  it.each([
+    { intent: "equipment", services: ["Solar panels"], useCase: undefined, budget: undefined, installationHelp: true },
+    { intent: "service", services: [], useCase: undefined, serviceType: "repair", explanation: "Inverter fault", budget: undefined },
+    { intent: "survey", services: [], useCase: undefined, surveyFor: "new", budget: undefined },
+    { intent: "unsure", services: [], useCase: undefined, explanation: "Need advice", budget: undefined },
+  ])("accepts a complete $intent request without a budget", (override) => {
+    expect(inquiryPayloadSchema.safeParse({ ...validPayload, ...override }).success).toBe(true);
+  });
+
   it("accepts a full valid payload and normalizes the phone", () => {
     const result = inquiryPayloadSchema.safeParse(validPayload);
     expect(result.success).toBe(true);
