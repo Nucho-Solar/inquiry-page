@@ -12,6 +12,7 @@ import {
 import { submitInquiry } from "@/lib/submitInquiry";
 import { readAttribution } from "@/lib/attribution";
 import { trackConversion } from "@/lib/trackConversion";
+import { trackLead } from "@/lib/metaPixel";
 import { newId } from "@/lib/uuid";
 import { callHref, contactDigits, formatPhone, whatsappHref } from "@/lib/contact";
 import heroImage from "@/assets/hero-solar.jpg";
@@ -299,6 +300,7 @@ export default function InquiryForm() {
       if (outcome.ok) {
         if (details.website.trim() === "" && fillMs >= MIN_FILL_MS) {
           trackConversion(import.meta.env.VITE_ADS_CONVERSION_LABEL);
+          trackLead(import.meta.env.VITE_META_PIXEL_ID, submissionId.current as string);
         }
         setConfirmation({ name: result.data.name, phone: result.data.phone });
       } else {
