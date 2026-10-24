@@ -5,12 +5,15 @@ import userEvent from "@testing-library/user-event";
 import InquiryForm from "@/components/InquiryForm";
 import { submitInquiry } from "@/lib/submitInquiry";
 import { trackConversion } from "@/lib/trackConversion";
+import { trackLead } from "@/lib/metaPixel";
 
 vi.mock("@/lib/submitInquiry", () => ({ submitInquiry: vi.fn() }));
 vi.mock("@/lib/trackConversion", () => ({ trackConversion: vi.fn() }));
+vi.mock("@/lib/metaPixel", () => ({ trackLead: vi.fn() }));
 
 const submitMock = vi.mocked(submitInquiry);
 const trackMock = vi.mocked(trackConversion);
+const leadMock = vi.mocked(trackLead);
 
 // The four goals sit on the landing page itself, so one click starts the enquiry.
 async function start(user: ReturnType<typeof userEvent.setup>, route: string) {
@@ -107,6 +110,7 @@ describe("InquiryForm", () => {
   beforeEach(() => {
     submitMock.mockReset();
     trackMock.mockReset();
+    leadMock.mockReset();
     submitMock.mockResolvedValue({ ok: true });
     window.history.replaceState({}, "", "/?gclid=ad-123&utm_campaign=home");
   });
@@ -363,5 +367,31 @@ describe("InquiryForm", () => {
     await waitFor(() => expect(submitMock).toHaveBeenCalledTimes(2));
     expect(submitMock.mock.calls[1][0].submissionId).toBe(submitMock.mock.calls[0][0].submissionId);
     expect(trackMock).not.toHaveBeenCalled();
+    expect(leadMock).not.toHaveBeenCalled();
+  });
+
+  it("sends the Meta Lead event once with the submission id after a real submission", async () => {
+    vi.stubEnv("VITE_META_PIXEL_ID", "123456789012345");
+    const user = userEvent.setup();
+    render(<InquiryForm />);
+    await start(user, "Get a site visit and quote");
+    await user.click(screen.getByRole("button", { name: /A new installation/i }));
+    // Let the 3 second bot check pass without waiting in real time.
+    vi.spyOn(performance, "now").mockReturnValue(1e9);
+    const sent = await contactAndSend(user);
+    await waitFor(() => expect(leadMock).toHaveBeenCalledTimes(1));
+    expect(leadMock).toHaveBeenCalledWith("123456789012345", sent.submissionId);
+  });
+
+  it("sends no Meta Lead event when the form was filled too fast", async () => {
+    vi.stubEnv("VITE_META_PIXEL_ID", "123456789012345");
+    const user = userEvent.setup();
+    render(<InquiryForm />);
+    await start(user, "Get a site visit and quote");
+    await user.click(screen.getByRole("button", { name: /A new installation/i }));
+    vi.spyOn(performance, "now").mockReturnValue(0);
+    await contactAndSend(user);
+    expect(await screen.findByText(/we will call or whatsapp|thank/i)).toBeInTheDocument();
+    expect(leadMock).not.toHaveBeenCalled();
   });
 });

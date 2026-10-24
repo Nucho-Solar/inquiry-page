@@ -49,6 +49,7 @@ Browser variables are compiled into the bundle, so neither is secret.
 
 - `VITE_CONTACT_PHONE`: optional, default `254758330507`. Only used for the tap-to-call link shown when sending fails. A wrong value sends visitors to the wrong number.
 - `VITE_ADS_CONVERSION_LABEL`: optional. Unset means no Google Ads conversion event is sent.
+- `VITE_META_PIXEL_ID`: optional, digits only. Unset means `src/lib/metaPixel.ts` loads nothing and no Lead event is sent. Set, it loads the pixel on every page view and fires `Lead` (with the submission id as `eventID`) next to the Google Ads conversion, under the same bot checks.
 - `VITE_APP_NAME`: optional, not read by `src/` today.
 
 `.env.example` is the template. Use `.env.local` for local overrides; `*.local` is gitignored.
